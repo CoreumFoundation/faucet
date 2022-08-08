@@ -22,9 +22,10 @@ type Client interface {
 }
 
 // New returns an instance of the Client interface
-func New(c coreumClient.Client) Client {
+func New(c coreumClient.Client, network app.Network) Client {
 	return client{
-		client: c,
+		client:  c,
+		network: network,
 	}
 }
 
@@ -40,15 +41,26 @@ func (c client) TransferToken(
 	destAddress sdk.AccAddress,
 ) (string, error) {
 	fromAddress, err := sdk.AccAddressFromBech32(sourcePrivateKey.Address())
+	if err != nil {
+		return "", err
+	}
 	msg := banktypes.NewMsgSend(fromAddress, destAddress, sdk.Coins{{
 		Denom:  amount.Denom,
 		Amount: sdk.NewIntFromBigInt(amount.Amount),
 	}})
 
-	signedTx, err := c.client.Sign(ctx, tx.BaseInput{
-		Signer:   types.Wallet{Key: sourcePrivateKey},
-		GasLimit: c.network.DeterministicGas().BankSend,
-	}, msg)
+	signedTx, err := c.client.Sign(
+		ctx,
+		tx.BaseInput{
+			Signer:   types.Wallet{Key: sourcePrivateKey},
+			GasLimit: c.network.DeterministicGas().BankSend,
+			GasPrice: types.Coin{Amount: c.network.InitialGasPrice(), Denom: c.network.TokenSymbol()},
+		},
+		msg,
+	)
+	if err != nil {
+		return "", err
+	}
 
 	result, err := c.client.Broadcast(ctx, c.client.Encode(signedTx))
 	if err != nil {

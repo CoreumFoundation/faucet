@@ -1,27 +1,10 @@
 package app
 
 import (
-	"crypto/ed25519"
-	"crypto/rand"
 	"testing"
 
-	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 )
-
-func TestGen(t *testing.T) {
-	// pk,_ :=types.GenerateSecp256k1Key()
-	// pk
-	prv := cosmossecp256k1.GenPrivKey()
-	// println(prv.PubKey().Address().String())
-	public, _, _ := ed25519.GenerateKey(rand.Reader)
-	println(sdk.AccAddress(prv.PubKey().Address()).String())
-	sdk.GetConfig().SetBech32PrefixForAccount("testtoken", "testtoken")
-	println(sdk.AccAddress(public).String())
-	// sdk.AccAddressFromBech32()
-	t.Fail()
-}
 
 func TestParseAddress(t *testing.T) {
 	testCases := []struct {
