@@ -15,12 +15,12 @@ func parseAddress(address string) (string, sdk.AccAddress, error) {
 
 	hrp, bz, err := bech32.DecodeAndConvert(address)
 	if err != nil {
-		return "", nil, err
+		return "", nil, errors.Wrap(err, "unable to parse address")
 	}
 
 	err = sdk.VerifyAddressFormat(bz)
 	if err != nil {
-		return "", nil, err
+		return "", nil, errors.Wrap(err, "unable to verify address")
 	}
 
 	return hrp, sdk.AccAddress(bz), nil

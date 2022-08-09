@@ -3,11 +3,17 @@ package http
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"io/ioutil"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/faucet/app"
+	"github.com/pkg/errors"
+	"go.uber.org/zap"
 )
 
 // HTTP type exposes app functionalities via http
@@ -23,14 +29,44 @@ func New(app app.App) HTTP {
 }
 
 // ListenAndServe starts listening for http requests
-func (h HTTP) ListenAndServe(ctx context.Context, port int) error {
+func (h HTTP) ListenAndServe(ctx context.Context, address string) error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/v1/faucet/send-money", h.sendMoneyHandle)
-	logMWMux := loggerMiddleware{
+	log := logger.Get(ctx)
+	mwMux := middleware{
 		next: mux,
-		log:  logger.Get(ctx),
+		log:  log,
 	}
-	return http.ListenAndServe(fmt.Sprintf(":%d", port), logMWMux)
+
+	server := http.Server{
+		Handler: mwMux,
+		Addr:    address,
+	}
+
+	exitChan := make(chan error, 1)
+	go func() {
+		log.Info("Started listening for http connections", zap.String("address", address))
+		exitChan <- server.ListenAndServe()
+	}()
+
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+	termSig := <-sigChan
+	log.Info("Termination signal received", zap.Stringer("signal", termSig))
+
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	if err := server.Shutdown(ctx); err != nil {
+		server.Close()
+		return errors.Errorf("graceful shutdown failed with error %s", err)
+	}
+
+	if err := <-exitChan; !errors.Is(err, http.ErrServerClosed) {
+		return err
+	}
+
+	return nil
 }
 
 // SendMoneyRequest is the input to GiveFunds method
@@ -43,44 +79,64 @@ type SendMoneyResponse struct {
 	TxHash string `json:"txHash"`
 }
 
+// ErrorResponse is the response given in case an error occurred.
+type ErrorResponse struct {
+	Msg string `json:"msg"`
+}
+
 func (h HTTP) sendMoneyHandle(resp http.ResponseWriter, req *http.Request) {
+	time.Sleep(12 * time.Second)
+	log := logger.Get(req.Context())
 	var rqBody SendMoneyRequest
 	err := parseJSONReqBody(req, &rqBody)
 	if err != nil {
-		fmt.Println("err read body", err)
-		respondErr(resp, err)
+		respondErr(log, resp, err)
 		return
 	}
 
 	txHash, err := h.app.GiveFunds(req.Context(), rqBody.Address)
 	if err != nil {
-		fmt.Println("err giving funds", err)
-		respondErr(resp, err)
+		respondErr(log, resp, err)
 		return
 	}
 
-	writeJSON(resp, SendMoneyResponse{TxHash: txHash}, http.StatusOK)
+	writeJSON(log, resp, SendMoneyResponse{TxHash: txHash}, http.StatusOK)
 }
-
-type js map[string]interface{}
 
 func parseJSONReqBody(req *http.Request, i interface{}) error {
-	decoder := json.NewDecoder(req.Body)
-	defer req.Body.Close()
-	return decoder.Decode(i)
+	body, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	err = json.Unmarshal(body, i)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
 }
 
-func writeJSON(resp http.ResponseWriter, msg interface{}, statusCode int) {
+func writeJSON(log *zap.Logger, resp http.ResponseWriter, msg interface{}, statusCode int) {
 	resp.Header().Add("Content-Type", "application/json")
 	resp.WriteHeader(statusCode)
 	encode := json.NewEncoder(resp)
 	if err := encode.Encode(msg); err != nil {
+		log.Error("Error encoding json message", zap.Any("msg", msg), zap.Error(err))
 	}
 }
 
-func respondErr(resp http.ResponseWriter, err error) {
-	writeJSON(resp, js{
-		"error": err.Error(),
-		"msg":   "got error",
-	}, http.StatusInternalServerError)
+func respondErr(log *zap.Logger, w http.ResponseWriter, err error) {
+	errList := map[error]int{
+		app.ErrAddressPrefixUnsupported: http.StatusNotAcceptable,
+		app.ErrInvalidAddressFormat:     http.StatusNotAcceptable,
+		app.ErrUnableToTransferToken:    http.StatusInternalServerError,
+	}
+
+	for e, status := range errList {
+		if errors.Is(err, e) {
+			writeJSON(log, w, ErrorResponse{Msg: e.Error()}, status)
+			return
+		}
+	}
+
+	writeJSON(log, w, ErrorResponse{Msg: "unable to fullfil request"}, http.StatusInternalServerError)
 }
