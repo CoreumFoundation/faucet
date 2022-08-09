@@ -23,5 +23,5 @@ func parseAddress(address string) (string, sdk.AccAddress, error) {
 		return "", nil, errors.Wrap(err, "unable to verify address")
 	}
 
-	return hrp, sdk.AccAddress(bz), nil
+	return hrp, bz, nil
 }
