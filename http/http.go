@@ -85,7 +85,6 @@ type ErrorResponse struct {
 }
 
 func (h HTTP) sendMoneyHandle(resp http.ResponseWriter, req *http.Request) {
-	time.Sleep(12 * time.Second)
 	log := logger.Get(req.Context())
 	var rqBody SendMoneyRequest
 	err := parseJSONReqBody(req, &rqBody)
@@ -108,11 +107,7 @@ func parseJSONReqBody(req *http.Request, i interface{}) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	err = json.Unmarshal(body, i)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	return nil
+	return errors.WithStack(json.Unmarshal(body, i))
 }
 
 func writeJSON(log *zap.Logger, resp http.ResponseWriter, msg interface{}, statusCode int) {
@@ -125,6 +120,7 @@ func writeJSON(log *zap.Logger, resp http.ResponseWriter, msg interface{}, statu
 }
 
 func respondErr(log *zap.Logger, w http.ResponseWriter, err error) {
+	log.Error("got error", zap.Error(err))
 	errList := map[error]int{
 		app.ErrAddressPrefixUnsupported: http.StatusNotAcceptable,
 		app.ErrInvalidAddressFormat:     http.StatusNotAcceptable,
