@@ -81,6 +81,7 @@ type config struct {
 func processFlags() config {
 	flagSet := pflag.NewFlagSet("faucet", pflag.ExitOnError)
 
+	logger.AddFlags(logger.ToolDefaultConfig, flagSet)
 	chainID := flagSet.String(flagChainID, string(coreumApp.DefaultChainID), "The network chain ID")
 	node := flagSet.String(flagNode, "localhost:26657", "<host>:<port> to Tendermint RPC interface for this chain")
 	listeningAddress := flagSet.String(flagAddress, ":8090", "<host>:<port> address to start listening for http requests")
