@@ -7,6 +7,7 @@ import (
 
 	"github.com/CoreumFoundation/faucet/app"
 	"github.com/CoreumFoundation/faucet/pkg/http"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 // HTTP type exposes app functionalities via http
@@ -28,6 +29,7 @@ func New(app app.App, logger *zap.Logger) HTTP {
 // ListenAndServe starts listening for http requests
 func (h HTTP) ListenAndServe(ctx context.Context, address string, shutdownSignal <-chan struct{}) {
 	h.server.Use(writeErrorMiddleware(h.logger))
+	h.server.Use(middleware.BodyLimit("4MB"))
 	h.server.GET("/api/v1/faucet/send-money", h.sendMoneyHandle)
 	h.server.Start(address, shutdownSignal, 0)
 }
