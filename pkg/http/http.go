@@ -2,13 +2,13 @@ package http
 
 import (
 	"context"
-	"errors"
 	"net"
 	"net/http"
 	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
@@ -59,28 +59,25 @@ type Server struct {
 // Start begins listening and serving http requests with graceful shut down. graceful shutdown signal should be
 // passed to the function as input and should come from the signal package.
 // NOTE: graceful shutdown does not handle websocket and other hijacked connections (because it relies on http.server#Shutdown)
-func (s Server) Start(listenAddress string, shutdownSig <-chan struct{}, forceShutdownTimeout time.Duration) {
+func (s Server) Start(listenAddress string, shutdownSig <-chan struct{}, forceShutdownTimeout time.Duration) error {
 	// Start server
-	exitListening := make(chan interface{}, 1)
+	exitListening := make(chan error)
+	listener, err := net.Listen("tcp", listenAddress)
+	if err != nil {
+		return errors.Wrap(err, "unable to listen on address")
+	}
 	go func() {
-		listener, err := net.Listen("tcp", listenAddress)
-		defer close(exitListening)
-
-		if err != nil {
-			s.logger.Info("unable to listen on address", zap.Error(err))
-			return
-		}
-
 		s.logger.Info("Started listening for http connections", zap.String("address", listenAddress))
 		if err := http.Serve(listener, s.Echo); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			s.Logger.Info("Error listening for connections", zap.Error(err))
+			exitListening <- errors.Wrap(err, "Error listening for connections")
 		}
+		exitListening <- nil
 	}()
 
 	select {
 	case <-shutdownSig:
-	case <-exitListening:
-		return
+	case err = <-exitListening:
+		return err
 	}
 	if forceShutdownTimeout == 0 {
 		forceShutdownTimeout = 120 * time.Second
@@ -91,8 +88,9 @@ func (s Server) Start(listenAddress string, shutdownSig <-chan struct{}, forceSh
 
 	s.logger.Info("Starting graceful shutdown")
 	if err := s.Shutdown(ctx); err != nil {
-		s.logger.Error("Error shutting down server", zap.Error(err))
+		return errors.Wrap(err, "Error shutting down server")
 	}
 
 	s.logger.Info("Server shutdown successfully")
+	return nil
 }

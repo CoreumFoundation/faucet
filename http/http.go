@@ -27,11 +27,11 @@ func New(app app.App, logger *zap.Logger) HTTP {
 }
 
 // ListenAndServe starts listening for http requests
-func (h HTTP) ListenAndServe(ctx context.Context, address string, shutdownSignal <-chan struct{}) {
+func (h HTTP) ListenAndServe(ctx context.Context, address string, shutdownSignal <-chan struct{}) error {
 	h.server.Use(writeErrorMiddleware(h.logger))
 	h.server.Use(middleware.BodyLimit("4MB"))
 	h.server.GET("/api/v1/faucet/send-money", h.sendMoneyHandle)
-	h.server.Start(address, shutdownSignal, 0)
+	return h.server.Start(address, shutdownSignal, 0)
 }
 
 // SendMoneyRequest is the input to GiveFunds method

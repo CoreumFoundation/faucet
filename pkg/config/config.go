@@ -30,10 +30,10 @@ func WithEnv(f *pflag.FlagSet, prefix string) error {
 		envValue := os.Getenv(name)
 		if envValue != "" {
 			if err = flag.Value.Set(envValue); err != nil {
-				break
+				return err
 			}
 		}
 	}
 
-	return err
+	return nil
 }

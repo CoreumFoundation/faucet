@@ -74,7 +74,7 @@ func main() {
 
 	app := app.New(cl, network, transferAmount, privateKeys[0])
 	server := http.New(app, log)
-	server.ListenAndServe(ctx, config.address, ctxQuit.Done())
+	err = server.ListenAndServe(ctx, config.address, ctxQuit.Done())
 	if err != nil {
 		log.Fatal("Error on ListenAndServe", zap.Error(err))
 	}

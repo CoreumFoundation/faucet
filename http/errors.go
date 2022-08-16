@@ -24,7 +24,7 @@ func writeErrorMiddleware(logger *zap.Logger) func(http.HandlerFunc) http.Handle
 			if err != nil {
 				logger = withEchoContext(logger, c)
 				err := mapError(err)
-				logger.Error("error processing request", zap.Error(err))
+				logger.Error("Error processing request", zap.Error(err))
 				return c.JSON(err.Status(), err)
 			}
 			return nil
