@@ -10,7 +10,6 @@ import (
 // WithEnv gets a flagSet and sets its values, with values read from env vars.
 // This function should be called only after all the flags are defined.
 func WithEnv(f *pflag.FlagSet, prefix string) error {
-	var err error
 	var flagNames []string
 	f.VisitAll(func(flag *pflag.Flag) {
 		flagNames = append(flagNames, flag.Name)
@@ -29,7 +28,7 @@ func WithEnv(f *pflag.FlagSet, prefix string) error {
 		name = strings.ReplaceAll(strings.ToUpper(name), "-", "_")
 		envValue := os.Getenv(name)
 		if envValue != "" {
-			if err = flag.Value.Set(envValue); err != nil {
+			if err := flag.Value.Set(envValue); err != nil {
 				return err
 			}
 		}
