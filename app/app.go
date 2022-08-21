@@ -3,18 +3,19 @@ package app
 import (
 	"context"
 
-	"github.com/CoreumFoundation/faucet/client/coreum"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/app"
-	"github.com/CoreumFoundation/coreum/pkg/types"
+	"github.com/CoreumFoundation/faucet/client/coreum"
 )
 
 // App implements core functionality
 type App struct {
-	fundsPrivateKey types.Secp256k1PrivateKey
+	fundsPrivateKey secp256k1.PrivKey
 	client          coreum.Client
-	transferAmount  types.Coin
+	transferAmount  sdk.Coin
 	network         app.Network
 }
 
@@ -22,8 +23,8 @@ type App struct {
 func New(
 	client coreum.Client,
 	network app.Network,
-	transferAmount types.Coin,
-	fundsPrivateKey types.Secp256k1PrivateKey,
+	transferAmount sdk.Coin,
+	fundsPrivateKey secp256k1.PrivKey,
 ) App {
 	return App{
 		client:          client,

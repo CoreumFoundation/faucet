@@ -28,6 +28,7 @@ func WithEnv(f *pflag.FlagSet, prefix string) error {
 		name = strings.ReplaceAll(strings.ToUpper(name), "-", "_")
 		envValue := os.Getenv(name)
 		if envValue != "" {
+			flag.DefValue = envValue
 			if err := flag.Value.Set(envValue); err != nil {
 				return err
 			}

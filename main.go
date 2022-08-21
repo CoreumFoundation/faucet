@@ -4,17 +4,16 @@ import (
 	"bufio"
 	"context"
 	"encoding/hex"
-	"math/big"
 	"os"
-	"time"
 
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"go.uber.org/zap"
 
-	coreumApp "github.com/CoreumFoundation/coreum/app"
-	coreumClient "github.com/CoreumFoundation/coreum/pkg/client"
-	"github.com/CoreumFoundation/coreum/pkg/types"
+	coreumapp "github.com/CoreumFoundation/coreum/app"
+	coreumclient "github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/faucet/app"
 	"github.com/CoreumFoundation/faucet/client/coreum"
 	"github.com/CoreumFoundation/faucet/http"
@@ -34,36 +33,32 @@ const (
 func main() {
 	loggerConfig, loggerFlagRegistry := logger.ConfigureWithCLI(logger.ServiceDefaultConfig)
 	log := logger.New(loggerConfig)
-	ctxQuit := signal.TerminateSignal(
-		signal.WithForceTimeout(30*time.Second),
-		signal.WithForceOnSecondSignal(true),
-	)
+	ctx := signal.TerminateSignal(context.Background())
 
-	ctx := context.Background()
 	ctx = logger.WithLogger(ctx, log)
 	flagSet := pflag.NewFlagSet("faucet", pflag.ExitOnError)
 	loggerFlagRegistry(flagSet)
-	config := getConfig(log, flagSet)
+	cfg := getConfig(log, flagSet)
 
-	network, err := coreumApp.NetworkByChainID(config.chainID)
+	network, err := coreumapp.NetworkByChainID(cfg.chainID)
 	if err != nil {
 		log.Fatal(
 			"Unable to get network config for chain-id",
 			zap.Error(err),
-			zap.String("chain-id", string(config.chainID)),
+			zap.String("chain-id", string(cfg.chainID)),
 		)
 	}
 
 	network.SetupPrefixes()
 	cl := coreum.New(
-		coreumClient.New(network.ChainID(), config.node),
+		coreumclient.New(network.ChainID(), cfg.node),
 		network,
 	)
-	transferAmount := types.Coin{
-		Amount: big.NewInt(config.transferAmount),
+	transferAmount := sdk.Coin{
+		Amount: sdk.NewInt(cfg.transferAmount),
 		Denom:  network.TokenSymbol(),
 	}
-	privateKeys, err := privateKeysFromFile(config.privateKeysFile)
+	privateKeys, err := privateKeysFromFile(cfg.privateKeysFile)
 	if err != nil {
 		log.Fatal("Error parsing private keys from file", zap.Error(err))
 	}
@@ -72,16 +67,16 @@ func main() {
 		log.Fatal("Private key file is empty", zap.Error(err))
 	}
 
-	app := app.New(cl, network, transferAmount, privateKeys[0])
-	server := http.New(app, log)
-	err = server.ListenAndServe(ctx, config.address, ctxQuit.Done())
+	application := app.New(cl, network, transferAmount, privateKeys[0])
+	server := http.New(application, log)
+	err = server.ListenAndServe(ctx, cfg.address)
 	if err != nil {
 		log.Fatal("Error on ListenAndServe", zap.Error(err))
 	}
 }
 
 type cfg struct {
-	chainID         coreumApp.ChainID
+	chainID         coreumapp.ChainID
 	node            string
 	privateKeysFile string
 	address         string
@@ -89,7 +84,7 @@ type cfg struct {
 }
 
 func getConfig(log *zap.Logger, flagSet *pflag.FlagSet) cfg {
-	chainID := flagSet.String(flagChainID, string(coreumApp.DefaultChainID), "The network chain ID")
+	chainID := flagSet.String(flagChainID, string(coreumapp.DefaultChainID), "The network chain ID")
 	node := flagSet.String(flagNode, "localhost:26657", "<host>:<port> to Tendermint RPC interface for this chain")
 	listeningAddress := flagSet.String(flagAddress, ":8090", "<host>:<port> address to start listening for http requests")
 	transferAmount := flagSet.Int64(flagTransferAmount, 1000000, "how much to transfer in each request")
@@ -100,7 +95,7 @@ func getConfig(log *zap.Logger, flagSet *pflag.FlagSet) cfg {
 		log.Fatal("error getting config", zap.Error(err))
 	}
 	return cfg{
-		chainID:         coreumApp.ChainID(*chainID),
+		chainID:         coreumapp.ChainID(*chainID),
 		node:            *node,
 		address:         *listeningAddress,
 		transferAmount:  *transferAmount,
@@ -108,21 +103,21 @@ func getConfig(log *zap.Logger, flagSet *pflag.FlagSet) cfg {
 	}
 }
 
-func privateKeysFromFile(path string) ([]types.Secp256k1PrivateKey, error) {
+func privateKeysFromFile(path string) ([]secp256k1.PrivKey, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to open file at %s", path)
 	}
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
-	var list []types.Secp256k1PrivateKey
+	var list []secp256k1.PrivKey
 	for scanner.Scan() {
 		privKey, err := hex.DecodeString(scanner.Text())
 		if err != nil {
 			return nil, errors.Wrapf(err, "unable to parse private key")
 		}
 
-		list = append(list, privKey)
+		list = append(list, secp256k1.PrivKey{Key: privKey})
 	}
 
 	return list, nil

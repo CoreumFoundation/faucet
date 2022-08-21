@@ -3,20 +3,22 @@ package coreum
 import (
 	"context"
 
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
 	"github.com/CoreumFoundation/coreum/app"
 	coreumClient "github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/pkg/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
 
 // Client is the interface that expose Coreum client functionality
 type Client interface {
 	TransferToken(
 		ctx context.Context,
-		sourcePrivateKey types.Secp256k1PrivateKey,
-		amount types.Coin,
+		sourcePrivateKey secp256k1.PrivKey,
+		amount sdk.Coin,
 		destAddress sdk.AccAddress,
 	) (txHash string, err error)
 }
@@ -36,27 +38,25 @@ type client struct {
 
 func (c client) TransferToken(
 	ctx context.Context,
-	sourcePrivateKey types.Secp256k1PrivateKey,
-	amount types.Coin,
+	sourcePrivateKey secp256k1.PrivKey,
+	amount sdk.Coin,
 	destAddress sdk.AccAddress,
 ) (string, error) {
-	fromAddress, err := sdk.AccAddressFromBech32(sourcePrivateKey.Address())
-	if err != nil {
-		return "", err
+	sourcePrivateKey.PubKey().Address()
+	fromAddress := sdk.AccAddress(sourcePrivateKey.PubKey().Bytes()).String()
+	msg := banktypes.MsgSend{
+		FromAddress: fromAddress,
+		ToAddress:   destAddress.String(),
+		Amount:      []sdk.Coin{amount},
 	}
-	msg := banktypes.NewMsgSend(fromAddress, destAddress, sdk.Coins{{
-		Denom:  amount.Denom,
-		Amount: sdk.NewIntFromBigInt(amount.Amount),
-	}})
-
 	signedTx, err := c.client.Sign(
 		ctx,
 		tx.BaseInput{
-			Signer:   types.Wallet{Key: sourcePrivateKey},
+			Signer:   types.Wallet{Key: types.Secp256k1PrivateKey(sourcePrivateKey.Key)},
 			GasLimit: c.network.DeterministicGas().BankSend,
 			GasPrice: types.Coin{Amount: c.network.InitialGasPrice(), Denom: c.network.TokenSymbol()},
 		},
-		msg,
+		&msg,
 	)
 	if err != nil {
 		return "", err

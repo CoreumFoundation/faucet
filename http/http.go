@@ -3,11 +3,11 @@ package http
 import (
 	"context"
 
+	"github.com/labstack/echo/v4/middleware"
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/faucet/app"
 	"github.com/CoreumFoundation/faucet/pkg/http"
-	"github.com/labstack/echo/v4/middleware"
 )
 
 // HTTP type exposes app functionalities via http
@@ -27,11 +27,11 @@ func New(app app.App, logger *zap.Logger) HTTP {
 }
 
 // ListenAndServe starts listening for http requests
-func (h HTTP) ListenAndServe(ctx context.Context, address string, shutdownSignal <-chan struct{}) error {
+func (h HTTP) ListenAndServe(ctx context.Context, address string) error {
 	h.server.Use(writeErrorMiddleware(h.logger))
 	h.server.Use(middleware.BodyLimit("4MB"))
-	h.server.GET("/api/v1/faucet/send-money", h.sendMoneyHandle)
-	return h.server.Start(address, shutdownSignal, 0)
+	h.server.GET("/api/faucet/v1/send-money", h.sendMoneyHandle)
+	return h.server.Start(ctx, address, 0)
 }
 
 // SendMoneyRequest is the input to GiveFunds method
@@ -41,7 +41,7 @@ type SendMoneyRequest struct {
 
 // SendMoneyResponse is the output to GiveFunds method
 type SendMoneyResponse struct {
-	TxHash string `json:"txHash"`
+	TxHash string `json:"tx_hash"`
 }
 
 // ErrorResponse is the response given in case an error occurred.

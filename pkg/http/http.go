@@ -59,23 +59,29 @@ type Server struct {
 // Start begins listening and serving http requests with graceful shut down. graceful shutdown signal should be
 // passed to the function as input and should come from the signal package.
 // NOTE: graceful shutdown does not handle websocket and other hijacked connections (because it relies on http.server#Shutdown)
-func (s Server) Start(listenAddress string, shutdownSig <-chan struct{}, forceShutdownTimeout time.Duration) error {
+func (s Server) Start(ctx context.Context, listenAddress string, forceShutdownTimeout time.Duration) error {
 	// Start server
-	exitListening := make(chan error)
+	exitListening := make(chan error, 1)
 	listener, err := net.Listen("tcp", listenAddress)
 	if err != nil {
 		return errors.Wrap(err, "unable to listen on address")
 	}
 	go func() {
+		var err error
+		defer func() {
+			rec := recover()
+			err = errors.Wrapf(err, "listen paniced %s", rec)
+			s.logger.Error("listen paniced", zap.Error(err))
+			exitListening <- err
+		}()
 		s.logger.Info("Started listening for http connections", zap.String("address", listenAddress))
-		if err := http.Serve(listener, s.Echo); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			exitListening <- errors.Wrap(err, "Error listening for connections")
+		if err = http.Serve(listener, s.Echo); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			err = errors.Wrap(err, "Error listening for connections")
 		}
-		exitListening <- nil
 	}()
 
 	select {
-	case <-shutdownSig:
+	case <-ctx.Done():
 	case err = <-exitListening:
 		return err
 	}
