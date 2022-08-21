@@ -51,6 +51,7 @@ func New(logger *zap.Logger) Server {
 	return Server{Echo: e, logger: logger}
 }
 
+// Server exposes functionalities needed to run an http server
 type Server struct {
 	*echo.Echo
 	logger *zap.Logger
