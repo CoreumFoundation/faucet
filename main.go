@@ -36,9 +36,13 @@ func main() {
 	ctx := signal.TerminateSignal(context.Background())
 
 	ctx = logger.WithLogger(ctx, log)
-	flagSet := pflag.NewFlagSet("faucet", pflag.ExitOnError)
+	flagSet := pflag.NewFlagSet("faucet", pflag.ContinueOnError)
 	loggerFlagRegistry(flagSet)
 	cfg := getConfig(log, flagSet)
+	if cfg.help {
+		flagSet.PrintDefaults()
+		return
+	}
 
 	network, err := coreumapp.NetworkByChainID(cfg.chainID)
 	if err != nil {
@@ -81,14 +85,16 @@ type cfg struct {
 	privateKeysFile string
 	address         string
 	transferAmount  int64
+	help            bool
 }
 
 func getConfig(log *zap.Logger, flagSet *pflag.FlagSet) cfg {
-	chainID := flagSet.String(flagChainID, string(coreumapp.DefaultChainID), "The network chain ID")
+	chainID := flagSet.String(flagChainID, string(coreumapp.Devnet), "The network chain ID")
 	node := flagSet.String(flagNode, "localhost:26657", "<host>:<port> to Tendermint RPC interface for this chain")
 	listeningAddress := flagSet.String(flagAddress, ":8090", "<host>:<port> address to start listening for http requests")
 	transferAmount := flagSet.Int64(flagTransferAmount, 1000000, "how much to transfer in each request")
 	keyFile := flagSet.String(flagPrivKeyFile, "private_keys_unarmored_hex.txt", "path to file containing hex encoded unarmored private keys, each line must contain one private key")
+	help := flagSet.BoolP("help", "h", false, "prints help")
 	_ = flagSet.Parse(os.Args[1:])
 	err := config.WithEnv(flagSet, "")
 	if err != nil {
@@ -100,6 +106,7 @@ func getConfig(log *zap.Logger, flagSet *pflag.FlagSet) cfg {
 		address:         *listeningAddress,
 		transferAmount:  *transferAmount,
 		privateKeysFile: *keyFile,
+		help:            *help,
 	}
 }
 

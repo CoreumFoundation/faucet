@@ -3,10 +3,12 @@ package logger
 import (
 	"os"
 
+	"github.com/pkg/errors"
+	"github.com/samber/lo"
+	"github.com/spf13/pflag"
+
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/pkg/errors"
-	"github.com/spf13/pflag"
 )
 
 // re-export logger vars for convenience
@@ -25,10 +27,12 @@ type (
 // RegisterFlagsOnFlagSet registers internally defined flags on an the provided flagSet
 type RegisterFlagsOnFlagSet func(*pflag.FlagSet)
 
-func newFlagRegister(fromFlagSet *pflag.FlagSet) RegisterFlagsOnFlagSet {
+func newFlagRegister(fromFlagSet *pflag.FlagSet, exceptions ...string) RegisterFlagsOnFlagSet {
 	return func(toFlagSet *pflag.FlagSet) {
 		fromFlagSet.VisitAll(func(f *pflag.Flag) {
-			toFlagSet.AddFlag(f)
+			if !lo.Contains(exceptions, f.Name) {
+				toFlagSet.AddFlag(f)
+			}
 		})
 	}
 }
@@ -49,7 +53,7 @@ func ConfigureWithCLI(defaultConfig logger.Config) (logger.Config, RegisterFlags
 		panic(errors.Errorf("incorrect logging format %s", defaultConfig.Format))
 	}
 
-	return defaultConfig, newFlagRegister(flags)
+	return defaultConfig, newFlagRegister(flags, "help")
 }
 
 var validFormats = map[logger.Format]bool{
