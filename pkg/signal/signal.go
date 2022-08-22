@@ -6,8 +6,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"go.uber.org/zap"
+
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 )
 
 // TerminateSignal returns a context which will be cancelled if SIGINT or SIGTERM is received by the application
