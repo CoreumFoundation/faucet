@@ -24,10 +24,7 @@ type (
 	Config = logger.Config
 )
 
-// RegisterFlagsOnFlagSet registers internally defined flags on an the provided flagSet
-type RegisterFlagsOnFlagSet func(*pflag.FlagSet)
-
-func newFlagRegister(fromFlagSet *pflag.FlagSet, exceptions ...string) RegisterFlagsOnFlagSet {
+func newFlagRegister(fromFlagSet *pflag.FlagSet, exceptions ...string) func(*pflag.FlagSet) {
 	return func(toFlagSet *pflag.FlagSet) {
 		fromFlagSet.VisitAll(func(f *pflag.Flag) {
 			if !lo.Contains(exceptions, f.Name) {
@@ -38,7 +35,7 @@ func newFlagRegister(fromFlagSet *pflag.FlagSet, exceptions ...string) RegisterF
 }
 
 // ConfigureWithCLI configures logger based on CLI flags
-func ConfigureWithCLI(defaultConfig logger.Config) (logger.Config, RegisterFlagsOnFlagSet) {
+func ConfigureWithCLI(defaultConfig logger.Config) (logger.Config, func(*pflag.FlagSet)) {
 	flags := pflag.NewFlagSet("logger", pflag.ContinueOnError)
 	flags.ParseErrorsWhitelist.UnknownFlags = true
 	logger.AddFlags(defaultConfig, flags)

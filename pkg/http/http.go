@@ -70,9 +70,10 @@ func (s Server) Start(ctx context.Context, listenAddress string, forceShutdownTi
 	go func() {
 		var err error
 		defer func() {
-			rec := recover()
-			err = errors.Wrapf(err, "listen paniced %s", rec)
-			s.logger.Error("listen paniced", zap.Error(err))
+			if rec := recover(); rec != nil {
+				err = errors.Wrapf(err, "listen paniced %s", rec)
+				s.logger.Error("listen paniced", zap.Error(err))
+			}
 			exitListening <- err
 		}()
 		s.logger.Info("Started listening for http connections", zap.String("address", listenAddress))
