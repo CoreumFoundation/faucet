@@ -19,7 +19,7 @@ func TerminateSignal(ctx context.Context) context.Context {
 	ctx, cancel := context.WithCancel(ctx)
 	go func() {
 		s := <-sigChan
-		log.Info("received signal", zap.Stringer("signal", s))
+		log.Info("Received signal", zap.Stringer("signal", s))
 		cancel()
 	}()
 	return ctx
