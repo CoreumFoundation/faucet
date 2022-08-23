@@ -45,6 +45,10 @@ func main() {
 		)
 	}
 
+	if network.ChainID() == coreumapp.Mainnet {
+		log.Fatal("running a faucet against mainnet is not allowed")
+	}
+
 	network.SetupPrefixes()
 	cl := coreum.New(
 		coreumclient.New(network.ChainID(), cfg.node),
