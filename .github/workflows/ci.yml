@@ -1,0 +1,27 @@
+name: ci
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  ci:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+      - name: Go version used to build crust tool
+        run: go version
+      - name: Set up crust
+        run: |
+          cd ..
+          git clone https://github.com/CoreumFoundation/crust.git 
+          echo "$(pwd)/crust/bin" >> $GITHUB_PATH
+      - name: Lint, run unit tests and build
+        run: crust lint test build --log-format=yaml
+# FIXME (milad): uncomment once integration tests are added
+#      - name: Execute integration tests
+#        run: crust znet test --log-format=yaml
