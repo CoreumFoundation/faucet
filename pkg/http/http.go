@@ -30,6 +30,7 @@ func New(logger *zap.Logger) Server {
 	e.Logger.SetLevel(99)
 	e.HideBanner = true
 	e.HidePort = true
+	e.Use(addLoggerToRequestContext(logger))
 	e.Use(requestIDMiddleware)
 	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 		LogURI:     true,
