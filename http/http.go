@@ -42,7 +42,7 @@ type SendMoneyRequest struct {
 
 // SendMoneyResponse is the output to GiveFunds method
 type SendMoneyResponse struct {
-	TxHash string `json:"tx_hash"`
+	TxHash string `json:"txHash"`
 }
 
 // ErrorResponse is the response given in case an error occurred.
