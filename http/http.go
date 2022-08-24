@@ -31,6 +31,7 @@ func (h HTTP) ListenAndServe(ctx context.Context, address string) error {
 	h.server.Use(writeErrorMiddleware(h.logger))
 	h.server.Use(middleware.BodyLimit("4MB"))
 	h.server.GET("/api/faucet/v1/send-money", h.sendMoneyHandle)
+	// TODO add a version endpoint
 	return h.server.Start(ctx, address, 0)
 }
 
