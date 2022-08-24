@@ -45,11 +45,6 @@ type SendMoneyResponse struct {
 	TxHash string `json:"txHash"`
 }
 
-// ErrorResponse is the response given in case an error occurred.
-type ErrorResponse struct {
-	Msg string `json:"msg"`
-}
-
 func (h HTTP) sendMoneyHandle(ctx http.Context) error {
 	var rqBody SendMoneyRequest
 	if err := ctx.Bind(&rqBody); err != nil {

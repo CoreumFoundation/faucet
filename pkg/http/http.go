@@ -88,7 +88,7 @@ func (s Server) Start(ctx context.Context, listenAddress string, forceShutdownTi
 		return err
 	}
 	if forceShutdownTimeout == 0 {
-		forceShutdownTimeout = 120 * time.Second
+		forceShutdownTimeout = 30 * time.Second
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), forceShutdownTimeout)
