@@ -30,17 +30,31 @@ func New(app app.App, logger *zap.Logger) HTTP {
 func (h HTTP) ListenAndServe(ctx context.Context, address string) error {
 	h.server.Use(writeErrorMiddleware(h.logger))
 	h.server.Use(middleware.BodyLimit("4MB"))
-	h.server.GET("/api/faucet/v1/send-money", h.sendMoneyHandle)
-	// TODO add a version endpoint
+	h.server.GET("/api/faucet/v1/status", h.statusHandle)
+	h.server.POST("/api/faucet/v1/send-money", h.sendMoneyHandle)
+
 	return h.server.Start(ctx, address, 0)
 }
 
-// SendMoneyRequest is the input to GiveFunds method
+// StatusResponse is the output to GiveFunds request
+type StatusResponse struct {
+	Version string `json:"version"`
+	Status  string `json:"status"`
+}
+
+func (h HTTP) statusHandle(ctx http.Context) error {
+	return ctx.JSON(200, StatusResponse{
+		Version: "v1",
+		Status:  "listening",
+	})
+}
+
+// SendMoneyRequest is the input to GiveFunds request
 type SendMoneyRequest struct {
 	Address string `json:"address"`
 }
 
-// SendMoneyResponse is the output to GiveFunds method
+// SendMoneyResponse is the output to GiveFunds request
 type SendMoneyResponse struct {
 	TxHash string `json:"txHash"`
 }

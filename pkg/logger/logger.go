@@ -17,6 +17,7 @@ var (
 	ToolDefaultConfig    = logger.ToolDefaultConfig
 	New                  = logger.New
 	WithLogger           = logger.WithLogger
+	Get                  = logger.Get
 )
 
 type (
