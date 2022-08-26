@@ -11,7 +11,7 @@ COPY . .
 RUN go build -o /bin/faucet
 
 # Deploy Stage
-FROM alpine
+FROM alpine:3.16
 
 WORKDIR /
 
