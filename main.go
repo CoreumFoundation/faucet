@@ -36,6 +36,12 @@ func main() {
 		return
 	}
 
+	log.Info("Starting faucet",
+		zap.String("address", cfg.address),
+		zap.String("chainID", cfg.chainID),
+		zap.String("privateKeysFile", cfg.privateKeysFile),
+		zap.String("node", cfg.node))
+
 	network, err := coreumapp.NetworkByChainID(coreumapp.ChainID(cfg.chainID))
 	if err != nil {
 		log.Fatal(
@@ -66,6 +72,12 @@ func main() {
 	if len(privateKeys) == 0 {
 		log.Fatal("Private key file is empty", zap.Error(err))
 	}
+
+	addresses := make([]string, 0, len(privateKeys))
+	for _, privKey := range privateKeys {
+		addresses = append(addresses, sdk.AccAddress(privKey.PubKey().Address()).String())
+	}
+	log.Info("Funding addresses", zap.Strings("addresses", addresses))
 
 	application := app.New(cl, network, transferAmount, privateKeys[0])
 	server := http.New(application, log)
