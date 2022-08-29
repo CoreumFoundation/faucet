@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"runtime"
 
 	"github.com/labstack/echo/v4/middleware"
 	"go.uber.org/zap"
@@ -36,16 +37,18 @@ func (h HTTP) ListenAndServe(ctx context.Context, address string) error {
 	return h.server.Start(ctx, address, 0)
 }
 
-// StatusResponse is the output to GiveFunds request
+// StatusResponse is the output to /status request
 type StatusResponse struct {
 	Version string `json:"version"`
 	Status  string `json:"status"`
+	Go      string `json:"go"`
 }
 
 func (h HTTP) statusHandle(ctx http.Context) error {
 	return ctx.JSON(200, StatusResponse{
-		Version: "v1",
+		Version: "v1.0.0",
 		Status:  "listening",
+		Go:      runtime.Version(),
 	})
 }
 
