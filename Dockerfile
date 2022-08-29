@@ -27,7 +27,7 @@ FROM alpine:3.16
 
 WORKDIR /
 
-VOLUME /data
+VOLUME /data/private_keys_unarmored_hex.txt
 
 COPY --from=builder /bin/faucet /bin/faucet
 
