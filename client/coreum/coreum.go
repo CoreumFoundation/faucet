@@ -54,7 +54,7 @@ func (c client) TransferToken(
 		tx.BaseInput{
 			Signer:   types.Wallet{Key: types.Secp256k1PrivateKey(sourcePrivateKey.Key)},
 			GasLimit: c.network.DeterministicGas().BankSend,
-			GasPrice: types.Coin{Amount: c.network.InitialGasPrice(), Denom: c.network.TokenSymbol()},
+			GasPrice: types.Coin{Amount: c.network.FeeModel().InitialGasPrice.BigInt(), Denom: c.network.TokenSymbol()},
 		},
 		&msg,
 	)
