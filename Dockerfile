@@ -14,8 +14,7 @@ ARG arch=x86_64
 RUN cp /lib/libwasmvm_muslc.${arch}.a /lib/libwasmvm_muslc.a
 
 WORKDIR /app
-COPY go.mod .
-COPY go.sum .
+COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
