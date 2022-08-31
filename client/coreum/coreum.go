@@ -6,7 +6,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"go.uber.org/zap"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum/app"
 	coreumClient "github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
@@ -42,8 +44,11 @@ func (c client) TransferToken(
 	amount sdk.Coin,
 	destAddress sdk.AccAddress,
 ) (string, error) {
-	sourcePrivateKey.PubKey().Address()
-	fromAddress := sdk.AccAddress(sourcePrivateKey.PubKey().Bytes()).String()
+	fromAddress := sdk.AccAddress(sourcePrivateKey.PubKey().Address()).String()
+
+	log := logger.Get(ctx).With(zap.String("from", fromAddress), zap.String("to", destAddress.String()))
+	log.Info("Sending tokens")
+
 	msg := banktypes.MsgSend{
 		FromAddress: fromAddress,
 		ToAddress:   destAddress.String(),
@@ -52,7 +57,7 @@ func (c client) TransferToken(
 	signedTx, err := c.client.Sign(
 		ctx,
 		tx.BaseInput{
-			Signer:   types.Wallet{Key: types.Secp256k1PrivateKey(sourcePrivateKey.Key)},
+			Signer:   types.Wallet{Key: sourcePrivateKey.Key},
 			GasLimit: c.network.DeterministicGas().BankSend,
 			GasPrice: types.Coin{Amount: c.network.FeeModel().InitialGasPrice.BigInt(), Denom: c.network.TokenSymbol()},
 		},
@@ -67,5 +72,6 @@ func (c client) TransferToken(
 		return "", err
 	}
 
+	log.Info("Tokens sent")
 	return result.TxHash, nil
 }
