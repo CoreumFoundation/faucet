@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
-	"io"
 	"net/http"
 	"testing"
 
@@ -22,8 +21,8 @@ import (
 )
 
 type testConfig struct {
-	nodeURI        string
-	faucetURI      string
+	coredAddress   string
+	faucetAddress  string
 	clientCtx      client.Context
 	transferAmount string
 	network        app.Network
@@ -32,11 +31,11 @@ type testConfig struct {
 var cfg testConfig
 
 func TestMain(m *testing.M) {
-	flag.StringVar(&cfg.nodeURI, "nodeURI", "localhost:26656", "Address of cored node started by znet")
-	flag.StringVar(&cfg.faucetURI, "faucetURI", "http://localhost:8090", "Address of the faucet")
+	flag.StringVar(&cfg.coredAddress, "cored-address", "localhost:26656", "Address of cored node started by znet")
+	flag.StringVar(&cfg.faucetAddress, "faucet-address", "http://localhost:8090", "Address of the faucet")
 	flag.StringVar(&cfg.transferAmount, "transfer-amount", "1000000", "Amount transferred by faucet in each request")
 	flag.Parse()
-	rpcClient, err := client.NewClientFromNode("tcp://" + cfg.nodeURI)
+	rpcClient, err := client.NewClientFromNode("tcp://" + cfg.coredAddress)
 	must.OK(err)
 	cfg.network, _ = app.NetworkByChainID(app.Devnet)
 	cfg.network.SetupPrefixes()
@@ -68,7 +67,7 @@ func TestTransferRequest(t *testing.T) {
 }
 
 func requestFunds(ctx context.Context, address string) (string, error) {
-	url := cfg.faucetURI + "/api/faucet/v1/send-money"
+	url := cfg.faucetAddress + "/api/faucet/v1/send-money"
 	method := "POST"
 
 	sendMoneyReq := h.SendMoneyRequest{
@@ -94,14 +93,9 @@ func requestFunds(ctx context.Context, address string) (string, error) {
 	}
 	defer res.Body.Close()
 
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return "", err
-	}
-
+	decoder := json.NewDecoder(res.Body)
 	var sendMoneyResponse h.SendMoneyResponse
-
-	err = json.Unmarshal(body, &sendMoneyResponse)
+	err = decoder.Decode(&sendMoneyResponse)
 	if err != nil {
 		return "", err
 	}
