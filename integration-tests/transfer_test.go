@@ -31,11 +31,11 @@ type testConfig struct {
 var cfg testConfig
 
 func TestMain(m *testing.M) {
-	flag.StringVar(&cfg.coredAddress, "cored-address", "localhost:26656", "Address of cored node started by znet")
+	flag.StringVar(&cfg.coredAddress, "cored-address", "tcp://localhost:26657", "Address of cored node started by znet")
 	flag.StringVar(&cfg.faucetAddress, "faucet-address", "http://localhost:8090", "Address of the faucet")
 	flag.StringVar(&cfg.transferAmount, "transfer-amount", "1000000", "Amount transferred by faucet in each request")
 	flag.Parse()
-	rpcClient, err := client.NewClientFromNode("tcp://" + cfg.coredAddress)
+	rpcClient, err := client.NewClientFromNode(cfg.coredAddress)
 	must.OK(err)
 	cfg.network, _ = app.NetworkByChainID(app.Devnet)
 	cfg.network.SetupPrefixes()
