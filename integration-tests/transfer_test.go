@@ -5,19 +5,21 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
-	"net/http"
+	"io"
+	nethttp "net/http"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum/app"
-	h "github.com/CoreumFoundation/faucet/http"
+	"github.com/CoreumFoundation/faucet/http"
 )
 
 type testConfig struct {
@@ -66,11 +68,31 @@ func TestTransferRequest(t *testing.T) {
 	assert.EqualValues(t, cfg.transferAmount, resp.Balances.AmountOf(cfg.network.TokenSymbol()).String())
 }
 
+func TestTransferRequest_WrongAddress(t *testing.T) {
+	ctx := context.Background()
+	address := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String()
+	address += "s"
+
+	// request fund
+	clientCtx := cfg.clientCtx
+	txHash, err := requestFunds(ctx, address)
+	assert.Error(t, err)
+	assert.Len(t, txHash, 0)
+
+	// query funds
+	bankQueryClient := banktypes.NewQueryClient(clientCtx)
+	resp, err := bankQueryClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{Address: address})
+	require.Error(t, err)
+
+	// make assertions
+	assert.Nil(t, resp)
+}
+
 func requestFunds(ctx context.Context, address string) (string, error) {
 	url := cfg.faucetAddress + "/api/faucet/v1/send-money"
 	method := "POST"
 
-	sendMoneyReq := h.SendMoneyRequest{
+	sendMoneyReq := http.SendMoneyRequest{
 		Address: address,
 	}
 	payloadBuffer := bytes.NewBuffer(nil)
@@ -79,8 +101,8 @@ func requestFunds(ctx context.Context, address string) (string, error) {
 		return "", err
 	}
 
-	client := &http.Client{}
-	req, err := http.NewRequestWithContext(ctx, method, url, payloadBuffer)
+	client := &nethttp.Client{}
+	req, err := nethttp.NewRequestWithContext(ctx, method, url, payloadBuffer)
 	if err != nil {
 		return "", err
 	}
@@ -91,10 +113,14 @@ func requestFunds(ctx context.Context, address string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	if res.StatusCode > 299 {
+		body, _ := io.ReadAll(res.Body)
+		return "", errors.Errorf("non 2xx response, body: %s", body)
+	}
 	defer res.Body.Close()
 
 	decoder := json.NewDecoder(res.Body)
-	var sendMoneyResponse h.SendMoneyResponse
+	var sendMoneyResponse http.SendMoneyResponse
 	err = decoder.Decode(&sendMoneyResponse)
 	if err != nil {
 		return "", err
