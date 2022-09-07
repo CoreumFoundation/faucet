@@ -70,8 +70,7 @@ func TestTransferRequest(t *testing.T) {
 
 func TestTransferRequest_WrongAddress(t *testing.T) {
 	ctx := context.Background()
-	address := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String()
-	address += "s"
+	address := "core1hrlnys435ph2gehthddlg2g2s246my30q0gfs2"
 
 	// request fund
 	clientCtx := cfg.clientCtx
