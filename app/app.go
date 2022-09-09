@@ -3,9 +3,9 @@ package app
 import (
 	"context"
 
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/faucet/client/coreum"
@@ -13,24 +13,26 @@ import (
 
 // App implements core functionality
 type App struct {
-	fundsPrivateKey secp256k1.PrivKey
-	client          coreum.Client
-	transferAmount  sdk.Coin
-	network         app.Network
+	batcher        *coreum.Batcher
+	transferAmount sdk.Coin
+	network        app.Network
 }
 
 // New returns a new instance of the App
 func New(
+	ctx context.Context,
+	logger *zap.Logger,
 	client coreum.Client,
 	network app.Network,
 	transferAmount sdk.Coin,
-	fundsPrivateKey secp256k1.PrivKey,
+	fundingAddresses []sdk.AccAddress,
 ) App {
+	batcher := coreum.NewBatcher(ctx, logger, client, fundingAddresses, transferAmount)
+	batcher.Start(ctx)
 	return App{
-		client:          client,
-		fundsPrivateKey: fundsPrivateKey,
-		network:         network,
-		transferAmount:  transferAmount,
+		batcher:        batcher,
+		network:        network,
+		transferAmount: transferAmount,
 	}
 }
 
@@ -50,7 +52,7 @@ func (a App) GiveFunds(ctx context.Context, address string) (string, error) {
 		)
 	}
 
-	txHash, err := a.client.TransferToken(ctx, a.fundsPrivateKey, a.transferAmount, sdkAddr)
+	txHash, err := a.batcher.TransferToken(ctx, sdkAddr)
 	if err != nil {
 		return "", errors.Wrapf(ErrUnableToTransferToken, "err:%s", err)
 	}

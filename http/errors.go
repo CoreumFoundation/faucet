@@ -2,9 +2,9 @@ package http
 
 import (
 	"encoding/json"
-	"errors"
 	stdHttp "net/http"
 
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/faucet/app"
