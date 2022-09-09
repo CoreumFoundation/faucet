@@ -6,7 +6,7 @@ replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alp
 
 require (
 	github.com/CoreumFoundation/coreum v0.0.0-20220907105439-88747a0a00a5
-	github.com/CoreumFoundation/coreum-tools v0.2.1
+	github.com/CoreumFoundation/coreum-tools v0.2.2
 	github.com/cosmos/cosmos-sdk v0.45.4
 	github.com/google/uuid v1.3.0
 	github.com/labstack/echo/v4 v4.8.0

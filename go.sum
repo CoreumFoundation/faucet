@@ -109,6 +109,8 @@ github.com/CoreumFoundation/coreum v0.0.0-20220907105439-88747a0a00a5 h1:/HW+lpy
 github.com/CoreumFoundation/coreum v0.0.0-20220907105439-88747a0a00a5/go.mod h1:sa3pYlkgII8E0dQah5zER8dQpfkW/8VgTb+t0j9vjLs=
 github.com/CoreumFoundation/coreum-tools v0.2.1 h1:mns3e0lcY/+nRnpaxHo3KyKon+bveXFdczKJXLi3TvQ=
 github.com/CoreumFoundation/coreum-tools v0.2.1/go.mod h1:VD93vCHkxYaT/RhOesXTFgd/GQDW54tr0BqGi5JU1c0=
+github.com/CoreumFoundation/coreum-tools v0.2.2 h1:Le+BQry2eYykJKVRqyWgsT2vLhvf1r9D9NB+83MC4sU=
+github.com/CoreumFoundation/coreum-tools v0.2.2/go.mod h1:VD93vCHkxYaT/RhOesXTFgd/GQDW54tr0BqGi5JU1c0=
 github.com/CosmWasm/wasmd v0.27.0 h1:GYctl+sqCa8zpDTTUhX0/nf/4ej9J7x/88UmKH9V6Nc=
 github.com/CosmWasm/wasmd v0.27.0/go.mod h1:iiHoIuoCjR7kV4cS7PPt4NmyOXv+V9kohRQBsFIreMU=
 github.com/CosmWasm/wasmvm v1.0.0 h1:NRmnHe3xXsKn2uEcB1F5Ha323JVAhON+BI6L177dlKc=
