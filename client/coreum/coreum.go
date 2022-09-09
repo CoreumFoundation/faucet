@@ -17,6 +17,13 @@ import (
 
 // Client is the interface that expose Coreum client functionality
 type Client interface {
+	TransferTokenManyAsyc(
+		ctx context.Context,
+		sourcePrivateKey secp256k1.PrivKey,
+		amount sdk.Coin,
+		destAddresses []sdk.AccAddress,
+	) (string, error)
+	AwaitTx(txHash string) error
 	TransferToken(
 		ctx context.Context,
 		sourcePrivateKey secp256k1.PrivKey,
@@ -36,6 +43,19 @@ func New(c coreumClient.Client, network app.Network) Client {
 type client struct {
 	client  coreumClient.Client
 	network app.Network
+}
+
+func (c client) TransferTokenManyAsyc(
+	ctx context.Context,
+	sourcePrivateKey secp256k1.PrivKey,
+	amount sdk.Coin,
+	destAddresses []sdk.AccAddress,
+) (string, error) {
+
+}
+
+func (c client) AwaitTx(txHash string) error {
+
 }
 
 func (c client) TransferToken(

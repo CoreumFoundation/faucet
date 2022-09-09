@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/pflag"
 	"go.uber.org/zap"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
 	coreumapp "github.com/CoreumFoundation/coreum/app"
 	coreumclient "github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/faucet/app"
@@ -19,6 +20,7 @@ import (
 	"github.com/CoreumFoundation/faucet/http"
 	"github.com/CoreumFoundation/faucet/pkg/config"
 	"github.com/CoreumFoundation/faucet/pkg/logger"
+	"github.com/CoreumFoundation/faucet/pkg/queue"
 	"github.com/CoreumFoundation/faucet/pkg/signal"
 )
 
@@ -79,9 +81,22 @@ func main() {
 	}
 	log.Info("Funding addresses", zap.Strings("addresses", addresses))
 
-	application := app.New(cl, network, transferAmount, privateKeys[0])
-	server := http.New(application, log)
-	err = server.ListenAndServe(ctx, cfg.address)
+	reqCh := make(chan queue.Request)
+
+	err = parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
+
+		spawn("queue", parallel.Fail, func(ctx context.Context) error {
+			return queue.Run(ctx, reqCh, privateKeys, cl)
+		})
+
+		spawn("application", parallel.Fail, func(ctx context.Context) error {
+			application := app.New(cl, network, transferAmount, privateKeys[0])
+			server := http.New(application, log, reqCh)
+			return server.ListenAndServe(ctx, cfg.address)
+		})
+
+		return nil
+	})
 	if err != nil {
 		log.Fatal("Error on ListenAndServe", zap.Error(err))
 	}

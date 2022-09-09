@@ -9,6 +9,7 @@ import (
 
 	"github.com/CoreumFoundation/faucet/app"
 	"github.com/CoreumFoundation/faucet/pkg/http"
+	"github.com/CoreumFoundation/faucet/pkg/queue"
 )
 
 // HTTP type exposes app functionalities via http
@@ -16,14 +17,16 @@ type HTTP struct {
 	app    app.App
 	server http.Server
 	logger *zap.Logger
+	reqCh  chan<- queue.Request
 }
 
 // New returns an instance of the HTTP type
-func New(app app.App, logger *zap.Logger) HTTP {
+func New(app app.App, logger *zap.Logger, reqCh chan<- queue.Request) HTTP {
 	return HTTP{
 		app:    app,
 		logger: logger,
 		server: http.New(logger),
+		reqCh:  reqCh,
 	}
 }
 
@@ -68,10 +71,21 @@ func (h HTTP) sendMoneyHandle(ctx http.Context) error {
 		return err
 	}
 
-	txHash, err := h.app.GiveFunds(ctx.Request().Context(), rqBody.Address)
-	if err != nil {
-		return err
+	txHashCh := make(chan string, 1)
+	h.reqCh <- queue.Request{
+		Address:  rqBody.Address,
+		TxHashCh: txHashCh,
 	}
 
-	return ctx.JSON(200, SendMoneyResponse{TxHash: txHash})
+	select {
+	case <-ctx.Request().Context().Done():
+		return ctx.Request().Context().Err()
+	case txHash := <-txHashCh:
+		return ctx.JSON(200, SendMoneyResponse{TxHash: txHash})
+	}
+
+	//txHash, err := h.app.GiveFunds(ctx.Request().Context(), rqBody.Address)
+	//if err != nil {
+	//	return err
+	//}
 }
