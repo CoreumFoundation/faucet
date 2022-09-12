@@ -185,5 +185,9 @@ func newKeyringFromFile(path string) (keyring.Keyring, []sdk.AccAddress, error) 
 		_, _ = kr.NewAccount(address.String(), mnemonic, "", "", hd.Secp256k1)
 	}
 
+	if len(addresses) == 0 {
+		return nil, nil, errors.New("could not parse any funding private keys")
+	}
+
 	return kr, addresses, nil
 }

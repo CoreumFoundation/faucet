@@ -20,19 +20,19 @@ func NewBatcher(
 	fundingAddresses []sdk.AccAddress,
 	amount sdk.Coin,
 ) *Batcher {
+	requestBufferSize := 10 // number of requests that will be buffered to be batched
+	batchSize := 10
 	b := &Batcher{
-		requestsChan:       make(chan *request),
-		logger:             logger,
-		client:             client,
-		fundingAddressChan: make(chan sdk.AccAddress, len(fundingAddresses)),
-		amount:             amount,
-		batchSize:          10,
-		mut:                &sync.RWMutex{},
-		stopped:            false,
+		requestsChan:     make(chan request, requestBufferSize),
+		logger:           logger,
+		client:           client,
+		fundingAddresses: append([]sdk.AccAddress{}, fundingAddresses...),
+		amount:           amount,
+		batchSize:        batchSize,
+		mut:              &sync.RWMutex{},
+		stopped:          false,
 	}
-	for _, key := range fundingAddresses {
-		b.fundingAddressChan <- key
-	}
+	b.start(ctx)
 
 	return b
 }
@@ -49,12 +49,12 @@ type coreumClient interface {
 
 // Batcher exposes functionality to batch many transfer requests
 type Batcher struct {
-	requestsChan       chan *request
-	logger             *zap.Logger
-	client             coreumClient
-	fundingAddressChan chan sdk.AccAddress
-	amount             sdk.Coin
-	batchSize          int
+	requestsChan     chan request
+	logger           *zap.Logger
+	client           coreumClient
+	fundingAddresses []sdk.AccAddress
+	amount           sdk.Coin
+	batchSize        int
 
 	mut     *sync.RWMutex
 	stopped bool
@@ -106,62 +106,74 @@ func (b *Batcher) requestFund(address sdk.AccAddress) chan result {
 		}
 		return req.responseChan
 	}
-	b.requestsChan <- &req
+	b.requestsChan <- req
 	return req.responseChan
 }
 
-// Start goroutine for batch processing requests
-func (b *Batcher) Start(ctx context.Context) {
-	var exit bool
+// start starts goroutines for batch processing requests
+func (b *Batcher) start(ctx context.Context) {
 	go func() {
-		for !exit {
-			select {
-			case <-ctx.Done():
-				b.close()
-				return
-			default:
-				b.batchSendRequests()
-			}
-		}
+		<-ctx.Done()
+		b.close()
 	}()
+	batchChan := make(chan batch)
+	go func() {
+		b.createBatches(batchChan)
+	}()
+
+	for _, fundingAddress := range b.fundingAddresses {
+		go func(addr sdk.AccAddress) {
+			b.processBatches(addr, batchChan)
+		}(fundingAddress)
+	}
 }
 
-func (b *Batcher) batchSendRequests() {
-	var accAddresses []sdk.AccAddress
-	var rspList []chan result
-	fundingAddress := <-b.fundingAddressChan
-	defer func() {
-		b.fundingAddressChan <- fundingAddress
-	}()
+type batch struct {
+	addresses []sdk.AccAddress
+	responses []chan result
+}
+
+func (b *Batcher) processBatches(fromAddress sdk.AccAddress, batchCh <-chan batch) {
 	for {
-		req := <-b.requestsChan
-		// nil means channel is closed, all requests are processed, and we will not process any further requests
-		if req == nil {
+		ba, ok := <-batchCh
+		if !ok {
 			break
 		}
-		accAddresses = append(accAddresses, req.address)
-		rspList = append(rspList, req.responseChan)
-		if len(accAddresses) >= b.batchSize || len(b.requestsChan) == 0 {
-			break
+
+		ctx := logger.WithLogger(context.Background(), b.logger)
+		ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
+		defer cancel()
+
+		var rsp = result{}
+		txHash, err := b.client.TransferTokenMany(ctx, fromAddress, b.amount, ba.addresses...)
+		if err != nil {
+			rsp.err = err
+		} else {
+			rsp.txHash = txHash
+		}
+
+		for _, r := range ba.responses {
+			r <- rsp
 		}
 	}
+}
 
-	if len(accAddresses) == 0 {
-		return
-	}
+func (b *Batcher) createBatches(batchCh chan<- batch) {
+	var ba batch
+	var exit bool
+	for !exit {
+		req, ok := <-b.requestsChan
+		if !ok {
+			exit = true
+		} else {
+			ba.addresses = append(ba.addresses, req.address)
+			ba.responses = append(ba.responses, req.responseChan)
+		}
 
-	ctx := logger.WithLogger(context.Background(), b.logger)
-	ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
-	defer cancel()
-	var rsp = result{}
-	txHash, err := b.client.TransferTokenMany(ctx, fundingAddress, b.amount, accAddresses...)
-	if err != nil {
-		rsp.err = err
-	} else {
-		rsp.txHash = txHash
+		if len(ba.addresses) >= b.batchSize || len(b.requestsChan) == 0 || exit {
+			batchCh <- ba
+			ba = batch{}
+		}
 	}
-
-	for _, r := range rspList {
-		r <- rsp
-	}
+	close(batchCh)
 }

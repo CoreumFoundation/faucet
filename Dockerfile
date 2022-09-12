@@ -26,11 +26,11 @@ FROM alpine:3.16
 
 WORKDIR /
 
-VOLUME /data/private_keys_unarmored_hex.txt
+VOLUME /data/private_keys_mnemonic.txt
 
 COPY --from=builder /bin/faucet /bin/faucet
 
-ENV KEY_PATH=/data/private_keys_unarmored_hex.txt
+ENV KEY_PATH=/data/private_keys_mnemonic.txt
 
 EXPOSE 8090
 
