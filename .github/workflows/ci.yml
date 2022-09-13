@@ -6,6 +6,10 @@ on:
     branches: [ master ]
   workflow_dispatch:
 
+env:
+  GKE_SA_KEY: ${{ secrets.GKE_SA_KEY }}
+  GKE_PROJECT: ${{ secrets.GKE_PROJECT }}
+
 jobs:
   ci:
     runs-on: ubuntu-22.04
@@ -18,9 +22,34 @@ jobs:
       - name: Set up crust
         run: |
           cd ..
-          git clone https://github.com/CoreumFoundation/crust.git 
+          git clone https://github.com/CoreumFoundation/crust.git
           echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Lint, run unit tests and build
         run: crust lint test build --log-format=yaml
       - name: Execute integration tests
         run: crust znet test --log-format=yaml --repos=faucet
+      # Setup gcloud CLI
+      - uses: google-github-actions/setup-gcloud@v0.2.1
+        with:
+          service_account_key: ${{ secrets.GKE_SA_KEY }}
+          project_id: ${{ secrets.GKE_PROJECT }}
+      - run: |-
+          gcloud --quiet auth configure-docker
+            - name: Build
+      # Setup image name
+      - run: |-
+          echo "IMAGE=`pwd | xargs basename`" >> $GITHUB_ENV
+      # Setup tag version & build image
+      - run: |-
+          export TAG=`cat VERSION`
+          echo "tag=$TAG" >> $GITHUB_ENV
+
+          docker build \
+            --tag "gcr.io/$GKE_PROJECT/$IMAGE:$TAG" \
+            --tag "gcr.io/$GKE_PROJECT/$IMAGE:latest" \
+            .
+      # Push the Docker image to Google Container Registry
+      - name: Publish
+        run: |-
+          docker push "gcr.io/$GKE_PROJECT/$IMAGE:${{ env.tag }}" && \
+          docker push "gcr.io/$GKE_PROJECT/$IMAGE:latest"
