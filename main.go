@@ -23,11 +23,12 @@ import (
 )
 
 const (
-	flagChainID        = "chain-id"
-	flagNode           = "node"
-	flagAddress        = "address"
-	flagTransferAmount = "transfer-amount"
-	flagPrivKeyFile    = "key-path"
+	flagChainID             = "chain-id"
+	flagNode                = "node"
+	flagAddress             = "address"
+	flagTransferAmount      = "transfer-amount"
+	flagPrivKeyFile         = "key-path"
+	flagPrivKeyFileMnemonic = "key-path-mnemonic"
 )
 
 func main() {
@@ -103,12 +104,13 @@ func setup() (context.Context, *zap.Logger, cfg) {
 }
 
 type cfg struct {
-	chainID         string
-	node            string
-	privateKeysFile string
-	address         string
-	transferAmount  int64
-	help            bool
+	chainID                 string
+	node                    string
+	privateKeysFile         string
+	privateKeysFileMnemonic string
+	address                 string
+	transferAmount          int64
+	help                    bool
 }
 
 func getConfig(log *zap.Logger, flagSet *pflag.FlagSet) cfg {
@@ -118,6 +120,7 @@ func getConfig(log *zap.Logger, flagSet *pflag.FlagSet) cfg {
 	flagSet.StringVar(&conf.address, flagAddress, ":8090", "<host>:<port> address to start listening for http requests")
 	flagSet.Int64Var(&conf.transferAmount, flagTransferAmount, 1000000, "how much to transfer in each request")
 	flagSet.StringVar(&conf.privateKeysFile, flagPrivKeyFile, "private_keys_unarmored_hex.txt", "path to file containing hex encoded unarmored private keys, each line must contain one private key")
+	flagSet.StringVar(&conf.privateKeysFileMnemonic, flagPrivKeyFileMnemonic, "private_keys_mnemonic.txt", "path to file containing mnemonic private keys, each line must contain one private key")
 	flagSet.BoolVarP(&conf.help, "help", "h", false, "prints help")
 	_ = flagSet.Parse(os.Args[1:])
 	err := config.WithEnv(flagSet, "")
