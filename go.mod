@@ -5,10 +5,11 @@ go 1.19
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
 require (
-	github.com/CoreumFoundation/coreum v0.0.0-20220908070242-5071f40f2c56
+	github.com/CoreumFoundation/coreum v0.0.0-20220913124954-c71024a4048f
 	github.com/CoreumFoundation/coreum-tools v0.2.1
 	github.com/cosmos/cosmos-sdk v0.45.4
 	github.com/google/uuid v1.3.0
+	github.com/ignite/cli v0.22.2
 	github.com/labstack/echo/v4 v4.8.0
 	github.com/pkg/errors v0.9.1
 	github.com/samber/lo v1.28.0
@@ -96,7 +97,6 @@ require (
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/hdevalence/ed25519consensus v0.0.0-20210204194344-59a8610d2b87 // indirect
 	github.com/iancoleman/strcase v0.2.0 // indirect
-	github.com/ignite/cli v0.22.2 // indirect
 	github.com/imdario/mergo v0.3.13 // indirect
 	github.com/improbable-eng/grpc-web v0.14.1 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect

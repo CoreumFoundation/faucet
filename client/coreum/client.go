@@ -38,8 +38,8 @@ func zapStringers[T fmt.Stringer](key string, list []T) zap.Field {
 	return zap.Strings(key, strList)
 }
 
-// TransferTokenMany transfers amount to a list of destination addresses in single tx
-func (c Client) TransferTokenMany(
+// TransferToken transfers amount to a list of destination addresses in single tx
+func (c Client) TransferToken(
 	ctx context.Context,
 	fromAddress sdk.AccAddress,
 	amount sdk.Coin,

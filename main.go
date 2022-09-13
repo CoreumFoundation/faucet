@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"context"
-	"fmt"
 	"os"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -71,7 +70,7 @@ func main() {
 		Denom:  network.TokenSymbol(),
 	}
 
-	kr, addresses, err := newKeyringFromFile(cfg.privateKeysFile)
+	kr, addresses, err := newKeyringFromFile(cfg.privateKeysFileMnemonic)
 	if err != nil {
 		log.Fatal(
 			"Unable to create keyring",
@@ -79,9 +78,12 @@ func main() {
 			zap.String("chain-id", cfg.chainID),
 		)
 	}
+
+	var addrList []string
 	for _, addr := range addresses {
-		fmt.Println(addr.String())
+		addrList = append(addrList, addr.String())
 	}
+	log.Info("funding account addresses", zap.Strings("addresses", addrList))
 
 	rpcClient, err := client.NewClientFromNode(cfg.node)
 	if err != nil {

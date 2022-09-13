@@ -23,13 +23,13 @@ func NewBatcher(
 	requestBufferSize := 10 // number of requests that will be buffered to be batched
 	batchSize := 10
 	b := &Batcher{
-		requestsChan:     make(chan request, requestBufferSize),
+		requestChan:      make(chan request, requestBufferSize),
 		logger:           logger,
 		client:           client,
 		fundingAddresses: append([]sdk.AccAddress{}, fundingAddresses...),
 		amount:           amount,
 		batchSize:        batchSize,
-		mut:              &sync.RWMutex{},
+		mu:               sync.RWMutex{},
 		stopped:          false,
 	}
 	b.start(ctx)
@@ -39,7 +39,7 @@ func NewBatcher(
 
 // coreumClient is the interface that provides Coreum coreumClient functionality
 type coreumClient interface {
-	TransferTokenMany(
+	TransferToken(
 		ctx context.Context,
 		fromAddress sdk.AccAddress,
 		amount sdk.Coin,
@@ -49,14 +49,14 @@ type coreumClient interface {
 
 // Batcher exposes functionality to batch many transfer requests
 type Batcher struct {
-	requestsChan     chan request
+	requestChan      chan request
 	logger           *zap.Logger
 	client           coreumClient
 	fundingAddresses []sdk.AccAddress
 	amount           sdk.Coin
 	batchSize        int
 
-	mut     *sync.RWMutex
+	mu      sync.RWMutex
 	stopped bool
 }
 
@@ -70,44 +70,49 @@ type request struct {
 	address      sdk.AccAddress
 }
 
-// TransferToken receives a singer transfer token request, batch sends them and returns the result
+// TransferToken receives a single transfer token request, batch sends them and returns the result
 func (b *Batcher) TransferToken(ctx context.Context, destAddress sdk.AccAddress) (string, error) {
-	res := <-b.requestFund(destAddress)
-	if res.err != nil {
-		return "", res.err
+	resChan, err := b.requestFund(destAddress)
+	if err != nil {
+		return "", errors.WithStack(err)
 	}
-	return res.txHash, nil
+	select {
+	case <-ctx.Done():
+		return "", errors.New("request aborted")
+	case res := <-resChan:
+		if res.err != nil {
+			return "", res.err
+		}
+		return res.txHash, nil
+	}
 }
 
 func (b *Batcher) close() {
-	b.mut.Lock()
-	defer b.mut.Unlock()
+	b.mu.Lock()
+	defer b.mu.Unlock()
 	if b.stopped {
 		return
 	}
-	close(b.requestsChan)
+	close(b.requestChan)
 	b.stopped = true
 }
 
 func (b *Batcher) isClosed() bool {
-	b.mut.RLock()
-	defer b.mut.RUnlock()
+	b.mu.RLock()
+	defer b.mu.RUnlock()
 	return b.stopped
 }
 
-func (b *Batcher) requestFund(address sdk.AccAddress) chan result {
+func (b *Batcher) requestFund(address sdk.AccAddress) (<-chan result, error) {
 	req := request{
 		responseChan: make(chan result, 1),
 		address:      address,
 	}
 	if b.isClosed() {
-		req.responseChan <- result{
-			err: errors.New("request processor is closed"),
-		}
-		return req.responseChan
+		return nil, errors.New("request processor is closed")
 	}
-	b.requestsChan <- req
-	return req.responseChan
+	b.requestChan <- req
+	return req.responseChan, nil
 }
 
 // start starts goroutines for batch processing requests
@@ -145,7 +150,7 @@ func (b *Batcher) processBatches(fromAddress sdk.AccAddress, batchCh <-chan batc
 		defer cancel()
 
 		var rsp = result{}
-		txHash, err := b.client.TransferTokenMany(ctx, fromAddress, b.amount, ba.addresses...)
+		txHash, err := b.client.TransferToken(ctx, fromAddress, b.amount, ba.addresses...)
 		if err != nil {
 			rsp.err = err
 		} else {
@@ -162,7 +167,7 @@ func (b *Batcher) createBatches(batchCh chan<- batch) {
 	var ba batch
 	var exit bool
 	for !exit {
-		req, ok := <-b.requestsChan
+		req, ok := <-b.requestChan
 		if !ok {
 			exit = true
 		} else {
@@ -170,7 +175,7 @@ func (b *Batcher) createBatches(batchCh chan<- batch) {
 			ba.responses = append(ba.responses, req.responseChan)
 		}
 
-		if len(ba.addresses) >= b.batchSize || len(b.requestsChan) == 0 || exit {
+		if len(ba.addresses) >= b.batchSize || len(b.requestChan) == 0 || exit {
 			batchCh <- ba
 			ba = batch{}
 		}
