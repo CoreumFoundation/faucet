@@ -2,8 +2,7 @@ Faucet for the Coreum blockchain
 
 ## Prerequisites
 To use `faucet` you need:
-- `go 1.17` or newer
-- `tmux`
+- `go 1.19` or newer
 - `docker`
 
 ## Executing `faucet`
@@ -55,7 +54,7 @@ How much to transfer in each request (default 1000000)
 
 ### `send_money`
 
-Returns XRP and SOLO balance of an address.
+Sends funds to the specified address.
 
 ```shell script
 curl -H "Content-Type: application/json" -X POST \
