@@ -1,7 +1,7 @@
 Faucet for the Coreum blockchain
 
 ## Prerequisites
-To use `crust` you need:
+To use `faucet` you need:
 - `go 1.17` or newer
 - `tmux`
 - `docker`
