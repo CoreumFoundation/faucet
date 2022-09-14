@@ -14,14 +14,13 @@ import (
 
 // NewBatcher returns new instance of Batcher type
 func NewBatcher(
-	ctx context.Context,
 	logger *zap.Logger,
 	client coreumClient,
 	fundingAddresses []sdk.AccAddress,
 	amount sdk.Coin,
+	batchSize int,
 ) *Batcher {
-	requestBufferSize := 10 // number of requests that will be buffered to be batched
-	batchSize := 10
+	requestBufferSize := batchSize // number of requests that will be buffered to be batched
 	b := &Batcher{
 		requestChan:      make(chan request, requestBufferSize),
 		logger:           logger,
@@ -29,10 +28,9 @@ func NewBatcher(
 		fundingAddresses: append([]sdk.AccAddress{}, fundingAddresses...),
 		amount:           amount,
 		batchSize:        batchSize,
+		batchChan:        make(chan batch),
 		mu:               sync.RWMutex{},
-		stopped:          false,
 	}
-	b.start(ctx)
 
 	return b
 }
@@ -55,6 +53,7 @@ type Batcher struct {
 	fundingAddresses []sdk.AccAddress
 	amount           sdk.Coin
 	batchSize        int
+	batchChan        chan batch
 
 	mu      sync.RWMutex
 	stopped bool
@@ -115,20 +114,19 @@ func (b *Batcher) requestFund(address sdk.AccAddress) (<-chan result, error) {
 	return req.responseChan, nil
 }
 
-// start starts goroutines for batch processing requests
-func (b *Batcher) start(ctx context.Context) {
+// Start starts goroutines for batch processing requests
+func (b *Batcher) Start(ctx context.Context) {
 	go func() {
 		<-ctx.Done()
 		b.close()
 	}()
-	batchChan := make(chan batch)
 	go func() {
-		b.createBatches(batchChan)
+		b.createBatches()
 	}()
 
 	for _, fundingAddress := range b.fundingAddresses {
 		go func(addr sdk.AccAddress) {
-			b.processBatches(addr, batchChan)
+			b.processBatches(addr)
 		}(fundingAddress)
 	}
 }
@@ -138,9 +136,9 @@ type batch struct {
 	responses []chan result
 }
 
-func (b *Batcher) processBatches(fromAddress sdk.AccAddress, batchCh <-chan batch) {
+func (b *Batcher) processBatches(fromAddress sdk.AccAddress) {
 	for {
-		ba, ok := <-batchCh
+		ba, ok := <-b.batchChan
 		if !ok {
 			break
 		}
@@ -163,7 +161,7 @@ func (b *Batcher) processBatches(fromAddress sdk.AccAddress, batchCh <-chan batc
 	}
 }
 
-func (b *Batcher) createBatches(batchCh chan<- batch) {
+func (b *Batcher) createBatches() {
 	var ba batch
 	var exit bool
 	for !exit {
@@ -176,9 +174,9 @@ func (b *Batcher) createBatches(batchCh chan<- batch) {
 		}
 
 		if len(ba.addresses) >= b.batchSize || len(b.requestChan) == 0 || exit {
-			batchCh <- ba
+			b.batchChan <- ba
 			ba = batch{}
 		}
 	}
-	close(batchCh)
+	close(b.batchChan)
 }

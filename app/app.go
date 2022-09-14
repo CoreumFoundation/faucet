@@ -27,7 +27,8 @@ func New(
 	transferAmount sdk.Coin,
 	fundingAddresses []sdk.AccAddress,
 ) App {
-	batcher := coreum.NewBatcher(ctx, logger, client, fundingAddresses, transferAmount)
+	batcher := coreum.NewBatcher(logger, client, fundingAddresses, transferAmount, 10)
+	batcher.Start(ctx)
 	return App{
 		batcher:        batcher,
 		network:        network,
