@@ -22,13 +22,10 @@ type App struct {
 func New(
 	ctx context.Context,
 	logger *zap.Logger,
-	client coreum.Client,
+	batcher *coreum.Batcher,
 	network app.Network,
 	transferAmount sdk.Coin,
-	fundingAddresses []sdk.AccAddress,
 ) App {
-	batcher := coreum.NewBatcher(logger, client, fundingAddresses, transferAmount, 10)
-	batcher.Start(ctx)
 	return App{
 		batcher:        batcher,
 		network:        network,

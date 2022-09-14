@@ -22,7 +22,7 @@ func NewBatcher(
 ) *Batcher {
 	requestBufferSize := batchSize // number of requests that will be buffered to be batched
 	b := &Batcher{
-		requestChan:      make(chan request, requestBufferSize),
+		requestsBuffer:   make(chan request, requestBufferSize),
 		logger:           logger,
 		client:           client,
 		fundingAddresses: append([]sdk.AccAddress{}, fundingAddresses...),
@@ -47,7 +47,7 @@ type coreumClient interface {
 
 // Batcher exposes functionality to batch many transfer requests
 type Batcher struct {
-	requestChan      chan request
+	requestsBuffer   chan request
 	logger           *zap.Logger
 	client           coreumClient
 	fundingAddresses []sdk.AccAddress
@@ -73,17 +73,10 @@ type request struct {
 func (b *Batcher) TransferToken(ctx context.Context, destAddress sdk.AccAddress) (string, error) {
 	resChan, err := b.requestFund(destAddress)
 	if err != nil {
-		return "", errors.WithStack(err)
+		return "", err
 	}
-	select {
-	case <-ctx.Done():
-		return "", errors.New("request aborted")
-	case res := <-resChan:
-		if res.err != nil {
-			return "", res.err
-		}
-		return res.txHash, nil
-	}
+	res := <-resChan
+	return res.txHash, res.err
 }
 
 func (b *Batcher) close() {
@@ -92,7 +85,7 @@ func (b *Batcher) close() {
 	if b.stopped {
 		return
 	}
-	close(b.requestChan)
+	close(b.requestsBuffer)
 	b.stopped = true
 }
 
@@ -110,7 +103,7 @@ func (b *Batcher) requestFund(address sdk.AccAddress) (<-chan result, error) {
 	if b.isClosed() {
 		return nil, errors.New("request processor is closed")
 	}
-	b.requestChan <- req
+	b.requestsBuffer <- req
 	return req.responseChan, nil
 }
 
@@ -120,9 +113,7 @@ func (b *Batcher) Start(ctx context.Context) {
 		<-ctx.Done()
 		b.close()
 	}()
-	go func() {
-		b.createBatches()
-	}()
+	go b.createBatches()
 
 	for _, fundingAddress := range b.fundingAddresses {
 		go func(addr sdk.AccAddress) {
@@ -165,7 +156,7 @@ func (b *Batcher) createBatches() {
 	var ba batch
 	var exit bool
 	for !exit {
-		req, ok := <-b.requestChan
+		req, ok := <-b.requestsBuffer
 		if !ok {
 			exit = true
 		} else {
@@ -173,7 +164,7 @@ func (b *Batcher) createBatches() {
 			ba.responses = append(ba.responses, req.responseChan)
 		}
 
-		if len(ba.addresses) >= b.batchSize || len(b.requestChan) == 0 || exit {
+		if (len(ba.addresses) >= b.batchSize || len(b.requestsBuffer) == 0 || exit) && len(ba.addresses) > 0 {
 			b.batchChan <- ba
 			ba = batch{}
 		}

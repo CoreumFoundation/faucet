@@ -19,22 +19,27 @@ func TestBatchSize(t *testing.T) {
 
 	batchSize := 10
 	batcher := &Batcher{
-		requestChan:      make(chan request, batchSize),
+		requestsBuffer:   make(chan request, batchSize),
 		logger:           log,
 		fundingAddresses: []sdk.AccAddress{},
 		batchSize:        batchSize,
 		batchChan:        make(chan batch),
 	}
 
-	for i := 0; i < 10; i++ {
-		go func() { batcher.requestChan <- request{} }()
-	}
-	time.Sleep(10 * time.Millisecond)
+	go func() {
+		for i := 0; i < 10; i++ {
+			batcher.requestsBuffer <- request{}
+		}
+	}()
 
 	batcher.Start(ctx)
 
-	batch, ok := <-batcher.batchChan
-	assertT.True(ok)
-	assertT.Len(batch.addresses, 10)
-	assertT.Len(batch.responses, 10)
+	select {
+	case batch, ok := <-batcher.batchChan:
+		assertT.True(ok)
+		assertT.Len(batch.addresses, 10)
+		assertT.Len(batch.responses, 10)
+	case <-time.After(10 * time.Second):
+		assertT.Fail("test timed out")
+	}
 }
