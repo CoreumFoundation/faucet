@@ -19,7 +19,7 @@ func TestBatchSize(t *testing.T) {
 
 	batchSize := 10
 	batcher := &Batcher{
-		requestsBuffer:   make(chan request, batchSize),
+		requestBuffer:    make(chan request, batchSize),
 		logger:           log,
 		fundingAddresses: []sdk.AccAddress{},
 		batchSize:        batchSize,
@@ -28,7 +28,10 @@ func TestBatchSize(t *testing.T) {
 
 	go func() {
 		for i := 0; i < 10; i++ {
-			batcher.requestsBuffer <- request{}
+			select {
+			case batcher.requestBuffer <- request{}:
+			case <-time.After(time.Second):
+			}
 		}
 	}()
 

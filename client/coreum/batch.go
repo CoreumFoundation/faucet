@@ -22,10 +22,10 @@ func NewBatcher(
 ) *Batcher {
 	requestBufferSize := batchSize // number of requests that will be buffered to be batched
 	b := &Batcher{
-		requestsBuffer:   make(chan request, requestBufferSize),
+		requestBuffer:    make(chan request, requestBufferSize),
 		logger:           logger,
 		client:           client,
-		fundingAddresses: append([]sdk.AccAddress{}, fundingAddresses...),
+		fundingAddresses: fundingAddresses,
 		amount:           amount,
 		batchSize:        batchSize,
 		batchChan:        make(chan batch),
@@ -47,7 +47,7 @@ type coreumClient interface {
 
 // Batcher exposes functionality to batch many transfer requests
 type Batcher struct {
-	requestsBuffer   chan request
+	requestBuffer    chan request
 	logger           *zap.Logger
 	client           coreumClient
 	fundingAddresses []sdk.AccAddress
@@ -85,7 +85,7 @@ func (b *Batcher) close() {
 	if b.stopped {
 		return
 	}
-	close(b.requestsBuffer)
+	close(b.requestBuffer)
 	b.stopped = true
 }
 
@@ -96,14 +96,14 @@ func (b *Batcher) isClosed() bool {
 }
 
 func (b *Batcher) requestFund(address sdk.AccAddress) (<-chan result, error) {
+	if b.isClosed() {
+		return nil, errors.New("request processor is closed")
+	}
 	req := request{
 		responseChan: make(chan result, 1),
 		address:      address,
 	}
-	if b.isClosed() {
-		return nil, errors.New("request processor is closed")
-	}
-	b.requestsBuffer <- req
+	b.requestBuffer <- req
 	return req.responseChan, nil
 }
 
@@ -134,39 +134,44 @@ func (b *Batcher) processBatches(fromAddress sdk.AccAddress) {
 			break
 		}
 
-		ctx := logger.WithLogger(context.Background(), b.logger)
-		ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
-		defer cancel()
+		b.sendBatch(fromAddress, ba)
+	}
+}
 
-		var rsp = result{}
-		txHash, err := b.client.TransferToken(ctx, fromAddress, b.amount, ba.addresses...)
-		if err != nil {
-			rsp.err = err
-		} else {
-			rsp.txHash = txHash
-		}
+func (b *Batcher) sendBatch(fromAddress sdk.AccAddress, ba batch) {
+	ctx := logger.WithLogger(context.Background(), b.logger)
+	ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
+	defer cancel()
 
-		for _, r := range ba.responses {
-			r <- rsp
-		}
+	var rsp = result{}
+	txHash, err := b.client.TransferToken(ctx, fromAddress, b.amount, ba.addresses...)
+	if err != nil {
+		rsp.err = err
+	} else {
+		rsp.txHash = txHash
+	}
+
+	for _, r := range ba.responses {
+		r <- rsp
 	}
 }
 
 func (b *Batcher) createBatches() {
 	var ba batch
-	var exit bool
-	for !exit {
-		req, ok := <-b.requestsBuffer
-		if !ok {
-			exit = true
-		} else {
+	for {
+		req, ok := <-b.requestBuffer
+		if ok {
 			ba.addresses = append(ba.addresses, req.address)
 			ba.responses = append(ba.responses, req.responseChan)
 		}
 
-		if (len(ba.addresses) >= b.batchSize || len(b.requestsBuffer) == 0 || exit) && len(ba.addresses) > 0 {
+		if (len(ba.addresses) >= b.batchSize || len(b.requestBuffer) == 0 || !ok) && len(ba.addresses) > 0 {
 			b.batchChan <- ba
 			ba = batch{}
+		}
+
+		if !ok {
+			break
 		}
 	}
 	close(b.batchChan)

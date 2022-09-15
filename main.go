@@ -122,7 +122,7 @@ func main() {
 	batcher := coreum.NewBatcher(log, cl, addresses, transferAmount, 10)
 	batcher.Start(ctx)
 
-	application := app.New(ctx, log, batcher, network, transferAmount)
+	application := app.New(batcher, network, transferAmount)
 	server := http.New(application, log)
 	err = server.ListenAndServe(ctx, cfg.address)
 	if err != nil {

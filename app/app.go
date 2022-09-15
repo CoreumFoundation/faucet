@@ -5,32 +5,33 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
-	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum/app"
-	"github.com/CoreumFoundation/faucet/client/coreum"
 )
 
 // App implements core functionality
 type App struct {
-	batcher        *coreum.Batcher
+	client         CoreumClient
 	transferAmount sdk.Coin
 	network        app.Network
 }
 
 // New returns a new instance of the App
 func New(
-	ctx context.Context,
-	logger *zap.Logger,
-	batcher *coreum.Batcher,
+	client CoreumClient,
 	network app.Network,
 	transferAmount sdk.Coin,
 ) App {
 	return App{
-		batcher:        batcher,
+		client:         client,
 		network:        network,
 		transferAmount: transferAmount,
 	}
+}
+
+// CoreumClient indicates the required functionality to connect to coreum blockchain
+type CoreumClient interface {
+	TransferToken(ctx context.Context, destAddress sdk.AccAddress) (string, error)
 }
 
 // GiveFunds gives funds to people asking for it
@@ -49,7 +50,7 @@ func (a App) GiveFunds(ctx context.Context, address string) (string, error) {
 		)
 	}
 
-	txHash, err := a.batcher.TransferToken(ctx, sdkAddr)
+	txHash, err := a.client.TransferToken(ctx, sdkAddr)
 	if err != nil {
 		return "", errors.Wrapf(ErrUnableToTransferToken, "err:%s", err)
 	}
