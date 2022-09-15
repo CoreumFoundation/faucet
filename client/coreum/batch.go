@@ -75,8 +75,12 @@ func (b *Batcher) TransferToken(ctx context.Context, destAddress sdk.AccAddress)
 	if err != nil {
 		return "", err
 	}
-	res := <-resChan
-	return res.txHash, res.err
+	select {
+	case res := <-resChan:
+		return res.txHash, res.err
+	case d := <-ctx.Done():
+		return "", errors.Errorf("request aborted, %v", d)
+	}
 }
 
 func (b *Batcher) close() {
