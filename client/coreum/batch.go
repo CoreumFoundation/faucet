@@ -133,6 +133,9 @@ type batch struct {
 
 func (b *Batcher) processBatches(fromAddress sdk.AccAddress) {
 	b.logger.Debug("processBatches started", zap.Stringer("fromAddress", fromAddress))
+	defer func() {
+		b.logger.Debug("processBatches exit", zap.Stringer("fromAddress", fromAddress))
+	}()
 	for {
 		ba, ok := <-b.batchChan
 		if !ok {
@@ -141,7 +144,6 @@ func (b *Batcher) processBatches(fromAddress sdk.AccAddress) {
 
 		b.sendBatch(fromAddress, ba)
 	}
-	b.logger.Debug("processBatches exit", zap.Stringer("fromAddress", fromAddress))
 }
 
 func (b *Batcher) sendBatch(fromAddress sdk.AccAddress, ba batch) {
