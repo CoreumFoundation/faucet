@@ -92,6 +92,7 @@ func (s Server) Start(ctx context.Context, listenAddress string, forceShutdownTi
 		forceShutdownTimeout = 30 * time.Second
 	}
 
+	//nolint:contextcheck // New context is created to support graceful shutdown and let pending requests to be completed
 	ctx, cancel := context.WithTimeout(context.Background(), forceShutdownTimeout)
 	defer cancel()
 
