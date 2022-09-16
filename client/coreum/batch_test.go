@@ -8,6 +8,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/zap/zaptest"
+
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 )
 
 type mockCoreumClient struct {
@@ -34,18 +38,22 @@ func (mc *mockCoreumClient) TransferToken(
 		amount:        amount,
 		destAddresses: destAddresses,
 	})
-	return "", nil
+	return fromAddress.String(), nil
 }
 
 func TestBatchSend(t *testing.T) {
 	assertT := assert.New(t)
-	ctx, cancel := context.WithCancel(context.Background())
+	requireT := require.New(t)
+
+	ctx := logger.WithLogger(context.Background(), zaptest.NewLogger(t))
+	ctx, cancel := context.WithCancel(ctx)
 	t.Cleanup(cancel)
 	amount := sdk.NewCoin("test-denom", sdk.NewInt(13))
 	fundingAddresses := []sdk.AccAddress{}
 	for i := 0; i < 2; i++ {
-		address, _ := sdk.AccAddressFromHex(secp256k1.GenPrivKey().PubKey().Address().String())
+		address, err := sdk.AccAddressFromHex(secp256k1.GenPrivKey().PubKey().Address().String())
 		fundingAddresses = append(fundingAddresses, address)
+		requireT.NoError(err)
 	}
 
 	mock := &mockCoreumClient{}
@@ -57,8 +65,9 @@ func TestBatchSend(t *testing.T) {
 	wg.Add(requestCount)
 	for i := 0; i < requestCount; i++ {
 		go func() {
-			_, err := batcher.TransferToken(ctx, nil)
+			txHash, err := batcher.TransferToken(ctx, nil)
 			assertT.NoError(err)
+			assertT.Greater(len(txHash), 1)
 			wg.Done()
 		}()
 	}
