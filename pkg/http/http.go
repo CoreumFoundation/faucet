@@ -92,11 +92,11 @@ func (s Server) Start(ctx context.Context, listenAddress string, forceShutdownTi
 		forceShutdownTimeout = 30 * time.Second
 	}
 
-	//nolint:contextcheck // New context is created to support graceful shutdown and let pending requests to be completed
 	ctx, cancel := context.WithTimeout(context.Background(), forceShutdownTimeout)
 	defer cancel()
 
 	s.logger.Info("Starting graceful shutdown")
+	//nolint:contextcheck // New context is created to support graceful shutdown and let pending requests to be completed
 	if err := s.Shutdown(ctx); err != nil {
 		return errors.Wrap(err, "Error shutting down server")
 	}
