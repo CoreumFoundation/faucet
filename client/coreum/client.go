@@ -2,7 +2,6 @@ package coreum
 
 import (
 	"context"
-	"fmt"
 
 	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -30,29 +29,29 @@ type Client struct {
 	txf       tx.Factory
 }
 
-func zapStringers[T fmt.Stringer](key string, list []T) zap.Field {
-	var strList []string
-	for _, l := range list {
-		strList = append(strList, l.String())
-	}
-	return zap.Strings(key, strList)
+type transferRequest struct {
+	amount      sdk.Coin
+	destAddress sdk.AccAddress
 }
 
 // TransferToken transfers amount to a list of destination addresses in single tx
 func (c Client) TransferToken(
 	ctx context.Context,
 	fromAddress sdk.AccAddress,
-	amount sdk.Coin,
-	destAddresses ...sdk.AccAddress,
+	requests ...transferRequest,
 ) (string, error) {
 	var msgs []sdk.Msg
-	log := logger.Get(ctx).With(zap.Stringer("from_address", fromAddress), zapStringers("to_addresses", destAddresses))
+	toAddressList := []string{}
+	for _, rq := range requests {
+		toAddressList = append(toAddressList, rq.destAddress.String())
+	}
+	log := logger.Get(ctx).With(zap.Stringer("from_address", fromAddress), zap.Strings("to_addresses", toAddressList))
 	log.Info("Sending tokens")
-	for _, destAddress := range destAddresses {
+	for _, rq := range requests {
 		msg := &banktypes.MsgSend{
 			FromAddress: fromAddress.String(),
-			ToAddress:   destAddress.String(),
-			Amount:      []sdk.Coin{amount},
+			ToAddress:   rq.destAddress.String(),
+			Amount:      []sdk.Coin{rq.amount},
 		}
 		msgs = append(msgs, msg)
 	}

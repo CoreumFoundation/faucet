@@ -15,7 +15,6 @@ import (
 func NewBatcher(
 	client coreumClient,
 	fundingAddresses []sdk.AccAddress,
-	amount sdk.Coin,
 	batchSize int,
 ) *Batcher {
 	requestBufferSize := batchSize // number of requests that will be buffered to be batched
@@ -23,7 +22,6 @@ func NewBatcher(
 		requestBuffer:    make(chan request, requestBufferSize),
 		client:           client,
 		fundingAddresses: fundingAddresses,
-		amount:           amount,
 		batchSize:        batchSize,
 		batchChan:        make(chan batch),
 		mu:               sync.RWMutex{},
@@ -37,8 +35,7 @@ type coreumClient interface {
 	TransferToken(
 		ctx context.Context,
 		fromAddress sdk.AccAddress,
-		amount sdk.Coin,
-		destAddresses ...sdk.AccAddress,
+		requests ...transferRequest,
 	) (string, error)
 }
 
@@ -47,7 +44,6 @@ type Batcher struct {
 	requestBuffer    chan request
 	client           coreumClient
 	fundingAddresses []sdk.AccAddress
-	amount           sdk.Coin
 	batchSize        int
 	batchChan        chan batch
 
@@ -62,12 +58,12 @@ type result struct {
 
 type request struct {
 	responseChan chan result
-	address      sdk.AccAddress
+	req          transferRequest
 }
 
 // TransferToken receives a single transfer token request, batch sends them and returns the result
-func (b *Batcher) TransferToken(ctx context.Context, destAddress sdk.AccAddress) (string, error) {
-	resChan, err := b.requestFund(destAddress)
+func (b *Batcher) SendToken(ctx context.Context, destAddress sdk.AccAddress, amount sdk.Coin) (string, error) {
+	resChan, err := b.requestFund(destAddress, amount)
 	if err != nil {
 		return "", err
 	}
@@ -95,13 +91,16 @@ func (b *Batcher) isClosed() bool {
 	return b.stopped
 }
 
-func (b *Batcher) requestFund(address sdk.AccAddress) (<-chan result, error) {
+func (b *Batcher) requestFund(address sdk.AccAddress, amount sdk.Coin) (<-chan result, error) {
 	if b.isClosed() {
 		return nil, errors.New("request processor is closed")
 	}
 	req := request{
 		responseChan: make(chan result, 1),
-		address:      address,
+		req: transferRequest{
+			destAddress: address,
+			amount:      amount,
+		},
 	}
 	b.requestBuffer <- req
 	return req.responseChan, nil
@@ -122,10 +121,7 @@ func (b *Batcher) Start(ctx context.Context) {
 	}
 }
 
-type batch struct {
-	addresses []sdk.AccAddress
-	responses []chan result
-}
+type batch []request
 
 func (b *Batcher) processBatches(ctx context.Context, fromAddress sdk.AccAddress) {
 	for {
@@ -145,15 +141,20 @@ func (b *Batcher) sendBatch(ctx context.Context, fromAddress sdk.AccAddress, ba 
 	defer cancel()
 
 	var rsp = result{}
-	txHash, err := b.client.TransferToken(ctx, fromAddress, b.amount, ba.addresses...)
+	requests := []transferRequest{}
+	for _, r := range ba {
+		requests = append(requests, r.req)
+	}
+	// TODO: retry can be implemented to make it more resilient to network errors.
+	txHash, err := b.client.TransferToken(ctx, fromAddress, requests...)
 	if err != nil {
 		rsp.err = err
 	} else {
 		rsp.txHash = txHash
 	}
 
-	for _, r := range ba.responses {
-		r <- rsp
+	for _, rq := range ba {
+		rq.responseChan <- rsp
 	}
 }
 
@@ -162,11 +163,10 @@ func (b *Batcher) createBatches() {
 	for {
 		req, ok := <-b.requestBuffer
 		if ok {
-			ba.addresses = append(ba.addresses, req.address)
-			ba.responses = append(ba.responses, req.responseChan)
+			ba = append(ba, req)
 		}
 
-		if (len(ba.addresses) >= b.batchSize || len(b.requestBuffer) == 0 || !ok) && len(ba.addresses) > 0 {
+		if (len(ba) >= b.batchSize || len(b.requestBuffer) == 0 || !ok) && len(ba) > 0 {
 			b.batchChan <- ba
 			ba = batch{}
 		}

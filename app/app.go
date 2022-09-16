@@ -11,27 +11,27 @@ import (
 
 // App implements core functionality
 type App struct {
-	client         CoreumClient
+	client         Coreum
 	transferAmount sdk.Coin
 	network        app.Network
 }
 
 // New returns a new instance of the App
 func New(
-	client CoreumClient,
+	coreum Coreum,
 	network app.Network,
 	transferAmount sdk.Coin,
 ) App {
 	return App{
-		client:         client,
+		client:         coreum,
 		network:        network,
 		transferAmount: transferAmount,
 	}
 }
 
-// CoreumClient indicates the required functionality to connect to coreum blockchain
-type CoreumClient interface {
-	TransferToken(ctx context.Context, destAddress sdk.AccAddress) (string, error)
+// Coreum indicates the required functionality to connect to coreum blockchain
+type Coreum interface {
+	SendToken(ctx context.Context, destAddress sdk.AccAddress, amount sdk.Coin) (string, error)
 }
 
 // GiveFunds gives funds to people asking for it
@@ -50,7 +50,7 @@ func (a App) GiveFunds(ctx context.Context, address string) (string, error) {
 		)
 	}
 
-	txHash, err := a.client.TransferToken(ctx, sdkAddr)
+	txHash, err := a.client.SendToken(ctx, sdkAddr, a.transferAmount)
 	if err != nil {
 		return "", errors.Wrapf(ErrUnableToTransferToken, "err:%s", err)
 	}

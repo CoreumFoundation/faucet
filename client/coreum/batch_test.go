@@ -20,23 +20,20 @@ type mockCoreumClient struct {
 }
 
 type clientCall struct {
-	fromAddress   sdk.AccAddress
-	amount        sdk.Coin
-	destAddresses []sdk.AccAddress
+	fromAddress sdk.AccAddress
+	requests    []transferRequest
 }
 
 func (mc *mockCoreumClient) TransferToken(
 	ctx context.Context,
 	fromAddress sdk.AccAddress,
-	amount sdk.Coin,
-	destAddresses ...sdk.AccAddress,
+	requests ...transferRequest,
 ) (string, error) {
 	mc.mu.Lock()
 	defer mc.mu.Unlock()
 	mc.calls = append(mc.calls, clientCall{
-		fromAddress:   fromAddress,
-		amount:        amount,
-		destAddresses: destAddresses,
+		fromAddress: fromAddress,
+		requests:    requests,
 	})
 	return fromAddress.String(), nil
 }
@@ -57,7 +54,7 @@ func TestBatchSend(t *testing.T) {
 	}
 
 	mock := &mockCoreumClient{}
-	batcher := NewBatcher(mock, fundingAddresses, amount, 10)
+	batcher := NewBatcher(mock, fundingAddresses, 10)
 	batcher.Start(ctx)
 
 	wg := sync.WaitGroup{}
@@ -65,7 +62,7 @@ func TestBatchSend(t *testing.T) {
 	wg.Add(requestCount)
 	for i := 0; i < requestCount; i++ {
 		go func() {
-			txHash, err := batcher.TransferToken(ctx, nil)
+			txHash, err := batcher.SendToken(ctx, nil, amount)
 			assertT.NoError(err)
 			assertT.Greater(len(txHash), 1)
 			wg.Done()
@@ -79,7 +76,7 @@ func TestBatchSend(t *testing.T) {
 
 	totalAddressesCount := 0
 	for _, call := range mock.calls {
-		totalAddressesCount += len(call.destAddresses)
+		totalAddressesCount += len(call.requests)
 	}
 
 	assertT.EqualValues(requestCount, totalAddressesCount)
