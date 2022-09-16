@@ -8,7 +8,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap/zaptest"
 )
 
 type mockCoreumClient struct {
@@ -40,7 +39,6 @@ func (mc *mockCoreumClient) TransferToken(
 
 func TestBatchSend(t *testing.T) {
 	assertT := assert.New(t)
-	log := zaptest.NewLogger(t)
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 	amount := sdk.NewCoin("test-denom", sdk.NewInt(13))
@@ -51,7 +49,7 @@ func TestBatchSend(t *testing.T) {
 	}
 
 	mock := &mockCoreumClient{}
-	batcher := NewBatcher(log, mock, fundingAddresses, amount, 10)
+	batcher := NewBatcher(mock, fundingAddresses, amount, 10)
 	batcher.Start(ctx)
 
 	wg := sync.WaitGroup{}

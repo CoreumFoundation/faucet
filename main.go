@@ -119,7 +119,7 @@ func main() {
 		txf,
 	)
 
-	batcher := coreum.NewBatcher(log, cl, addresses, transferAmount, 10)
+	batcher := coreum.NewBatcher(cl, addresses, transferAmount, 10)
 	batcher.Start(ctx)
 
 	application := app.New(batcher, network, transferAmount)

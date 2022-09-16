@@ -7,14 +7,12 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
-	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 )
 
 // NewBatcher returns new instance of Batcher type
 func NewBatcher(
-	logger *zap.Logger,
 	client coreumClient,
 	fundingAddresses []sdk.AccAddress,
 	amount sdk.Coin,
@@ -23,7 +21,6 @@ func NewBatcher(
 	requestBufferSize := batchSize // number of requests that will be buffered to be batched
 	b := &Batcher{
 		requestBuffer:    make(chan request, requestBufferSize),
-		logger:           logger,
 		client:           client,
 		fundingAddresses: fundingAddresses,
 		amount:           amount,
@@ -48,7 +45,6 @@ type coreumClient interface {
 // Batcher exposes functionality to batch many transfer requests
 type Batcher struct {
 	requestBuffer    chan request
-	logger           *zap.Logger
 	client           coreumClient
 	fundingAddresses []sdk.AccAddress
 	amount           sdk.Coin
@@ -121,7 +117,7 @@ func (b *Batcher) Start(ctx context.Context) {
 
 	for _, fundingAddress := range b.fundingAddresses {
 		go func(addr sdk.AccAddress) {
-			b.processBatches(addr)
+			b.processBatches(ctx, addr)
 		}(fundingAddress)
 	}
 }
@@ -131,23 +127,20 @@ type batch struct {
 	responses []chan result
 }
 
-func (b *Batcher) processBatches(fromAddress sdk.AccAddress) {
-	b.logger.Debug("processBatches started", zap.Stringer("fromAddress", fromAddress))
-	defer func() {
-		b.logger.Debug("processBatches exit", zap.Stringer("fromAddress", fromAddress))
-	}()
+func (b *Batcher) processBatches(ctx context.Context, fromAddress sdk.AccAddress) {
 	for {
 		ba, ok := <-b.batchChan
 		if !ok {
 			break
 		}
 
-		b.sendBatch(fromAddress, ba)
+		b.sendBatch(ctx, fromAddress, ba)
 	}
 }
 
-func (b *Batcher) sendBatch(fromAddress sdk.AccAddress, ba batch) {
-	ctx := logger.WithLogger(context.Background(), b.logger)
+func (b *Batcher) sendBatch(ctx context.Context, fromAddress sdk.AccAddress, ba batch) {
+	log := logger.Get(ctx)
+	ctx = logger.WithLogger(context.Background(), log)
 	ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
 	defer cancel()
 
