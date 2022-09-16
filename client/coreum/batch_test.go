@@ -53,8 +53,9 @@ func TestBatchSend(t *testing.T) {
 	batcher.Start(ctx)
 
 	wg := sync.WaitGroup{}
-	for i := 0; i < 100; i++ {
-		wg.Add(1)
+	requestCount := 100
+	wg.Add(requestCount)
+	for i := 0; i < requestCount; i++ {
 		go func() {
 			_, err := batcher.TransferToken(ctx, nil)
 			assertT.NoError(err)
@@ -72,5 +73,5 @@ func TestBatchSend(t *testing.T) {
 		totalAddressesCount += len(call.destAddresses)
 	}
 
-	assertT.EqualValues(100, totalAddressesCount)
+	assertT.EqualValues(requestCount, totalAddressesCount)
 }
