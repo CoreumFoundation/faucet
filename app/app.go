@@ -3,35 +3,35 @@ package app
 import (
 	"context"
 
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/app"
-	"github.com/CoreumFoundation/faucet/client/coreum"
 )
 
 // App implements core functionality
 type App struct {
-	fundsPrivateKey secp256k1.PrivKey
-	client          coreum.Client
-	transferAmount  sdk.Coin
-	network         app.Network
+	batcher        Batcher
+	transferAmount sdk.Coin
+	network        app.Network
 }
 
 // New returns a new instance of the App
 func New(
-	client coreum.Client,
+	batcher Batcher,
 	network app.Network,
 	transferAmount sdk.Coin,
-	fundsPrivateKey secp256k1.PrivKey,
 ) App {
 	return App{
-		client:          client,
-		fundsPrivateKey: fundsPrivateKey,
-		network:         network,
-		transferAmount:  transferAmount,
+		batcher:        batcher,
+		network:        network,
+		transferAmount: transferAmount,
 	}
+}
+
+// Batcher indicates the required functionality to connect to coreum blockchain
+type Batcher interface {
+	SendToken(ctx context.Context, destAddress sdk.AccAddress, amount sdk.Coin) (string, error)
 }
 
 // GiveFunds gives funds to people asking for it
@@ -50,7 +50,7 @@ func (a App) GiveFunds(ctx context.Context, address string) (string, error) {
 		)
 	}
 
-	txHash, err := a.client.TransferToken(ctx, a.fundsPrivateKey, a.transferAmount, sdkAddr)
+	txHash, err := a.batcher.SendToken(ctx, sdkAddr, a.transferAmount)
 	if err != nil {
 		return "", errors.Wrapf(ErrUnableToTransferToken, "err:%s", err)
 	}

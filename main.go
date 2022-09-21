@@ -3,17 +3,24 @@ package main
 import (
 	"bufio"
 	"context"
-	"encoding/hex"
 	"os"
 
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/crypto/hd"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/cosmos/cosmos-sdk/types/tx/signing"
+	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/ignite/cli/ignite/pkg/cosmoscmd"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"go.uber.org/zap"
 
 	coreumapp "github.com/CoreumFoundation/coreum/app"
-	coreumclient "github.com/CoreumFoundation/coreum/pkg/client"
+	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/faucet/app"
 	"github.com/CoreumFoundation/faucet/client/coreum"
 	"github.com/CoreumFoundation/faucet/http"
@@ -57,30 +64,65 @@ func main() {
 	}
 
 	network.SetupPrefixes()
-	cl := coreum.New(
-		coreumclient.New(network.ChainID(), cfg.node),
-		network,
-	)
+
 	transferAmount := sdk.Coin{
 		Amount: sdk.NewInt(cfg.transferAmount),
 		Denom:  network.TokenSymbol(),
 	}
-	privateKeys, err := privateKeysFromFile(cfg.privateKeysFile)
+
+	kr, addresses, err := newKeyringFromFile(cfg.fileMnemonic)
 	if err != nil {
-		log.Fatal("Error parsing private keys from file", zap.Error(err))
+		log.Fatal(
+			"Unable to create keyring",
+			zap.Error(err),
+			zap.String("chain-id", cfg.chainID),
+		)
 	}
 
-	if len(privateKeys) == 0 {
-		log.Fatal("Private key file is empty", zap.Error(err))
+	var addrList []string
+	for _, addr := range addresses {
+		addrList = append(addrList, addr.String())
+	}
+	log.Info("funding account addresses", zap.Strings("addresses", addrList))
+
+	rpcClient, err := client.NewClientFromNode(cfg.node)
+	if err != nil {
+		log.Fatal(
+			"Unable to create cosmos rpc client",
+			zap.Error(err),
+		)
 	}
 
-	addresses := make([]string, 0, len(privateKeys))
-	for _, privKey := range privateKeys {
-		addresses = append(addresses, sdk.AccAddress(privKey.PubKey().Address()).String())
-	}
-	log.Info("Funding addresses", zap.Strings("addresses", addresses))
+	mbm := module.NewBasicManager(
+		bank.AppModuleBasic{},
+		auth.AppModuleBasic{},
+	)
+	encodingConfig := cosmoscmd.MakeEncodingConfig(mbm)
+	clientCtx := client.Context{}.
+		WithCodec(encodingConfig.Marshaler).
+		WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
+		WithTxConfig(encodingConfig.TxConfig).
+		WithLegacyAmino(encodingConfig.Amino).
+		WithNodeURI(cfg.node).
+		WithChainID(string(network.ChainID())).
+		WithBroadcastMode(flags.BroadcastBlock).
+		WithClient(rpcClient)
 
-	application := app.New(cl, network, transferAmount, privateKeys[0])
+	txf := tx.Factory{}.
+		WithTxConfig(clientCtx.TxConfig).
+		WithKeybase(kr).
+		WithChainID(string(network.ChainID())).
+		WithSignMode(signing.SignMode_SIGN_MODE_DIRECT) //nolint:nosnakecase
+	cl := coreum.New(
+		network,
+		clientCtx,
+		txf,
+	)
+
+	batcher := coreum.NewBatcher(cl, addresses, 10)
+	batcher.Start(ctx)
+
+	application := app.New(batcher, network, transferAmount)
 	server := http.New(application, log)
 	err = server.ListenAndServe(ctx, cfg.address)
 	if err != nil {
@@ -104,23 +146,23 @@ func setup() (context.Context, *zap.Logger, cfg) {
 }
 
 type cfg struct {
-	chainID                 string
-	node                    string
-	privateKeysFile         string
-	privateKeysFileMnemonic string
-	address                 string
-	transferAmount          int64
-	help                    bool
+	chainID         string
+	node            string
+	privateKeysFile string
+	fileMnemonic    string
+	address         string
+	transferAmount  int64
+	help            bool
 }
 
 func getConfig(log *zap.Logger, flagSet *pflag.FlagSet) cfg {
 	var conf cfg
 	flagSet.StringVar(&conf.chainID, flagChainID, string(coreumapp.Devnet), "The network chain ID")
-	flagSet.StringVar(&conf.node, flagNode, "localhost:26657", "<host>:<port> to Tendermint RPC interface for this chain")
+	flagSet.StringVar(&conf.node, flagNode, "tcp://localhost:26657", "<host>:<port> to Tendermint RPC interface for this chain")
 	flagSet.StringVar(&conf.address, flagAddress, ":8090", "<host>:<port> address to start listening for http requests")
 	flagSet.Int64Var(&conf.transferAmount, flagTransferAmount, 1000000, "how much to transfer in each request")
 	flagSet.StringVar(&conf.privateKeysFile, flagPrivKeyFile, "private_keys_unarmored_hex.txt", "path to file containing hex encoded unarmored private keys, each line must contain one private key")
-	flagSet.StringVar(&conf.privateKeysFileMnemonic, flagPrivKeyFileMnemonic, "private_keys_mnemonic.txt", "path to file containing mnemonic for private keys, each line containing one mnemonic")
+	flagSet.StringVar(&conf.fileMnemonic, flagPrivKeyFileMnemonic, "mnemonic.txt", "path to file containing mnemonic for private keys, each line containing one mnemonic")
 	flagSet.BoolVarP(&conf.help, "help", "h", false, "prints help")
 	_ = flagSet.Parse(os.Args[1:])
 	err := config.WithEnv(flagSet, "")
@@ -130,22 +172,33 @@ func getConfig(log *zap.Logger, flagSet *pflag.FlagSet) cfg {
 	return conf
 }
 
-func privateKeysFromFile(path string) ([]secp256k1.PrivKey, error) {
+func newKeyringFromFile(path string) (keyring.Keyring, []sdk.AccAddress, error) {
 	file, err := os.Open(path)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to open file at %s", path)
+		return nil, nil, errors.Wrapf(err, "unable to open file at %s", path)
 	}
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
-	var list []secp256k1.PrivKey
+	kr := keyring.NewInMemory()
+	var addresses []sdk.AccAddress
 	for scanner.Scan() {
-		privKey, err := hex.DecodeString(scanner.Text())
+		mnemonic := scanner.Text()
+		tempKr := keyring.NewInMemory()
+		info, err := tempKr.NewAccount("temp", mnemonic, "", "", hd.Secp256k1)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unable to parse private key")
+			return nil, nil, errors.Wrapf(err, "unable to parse mnemonic key")
 		}
-
-		list = append(list, secp256k1.PrivKey{Key: privKey})
+		address := info.GetAddress()
+		addresses = append(addresses, address)
+		_, err = kr.NewAccount(address.String(), mnemonic, "", "", hd.Secp256k1)
+		if err != nil {
+			return nil, nil, errors.Wrapf(err, "unable to parse mnemonic key")
+		}
 	}
 
-	return list, nil
+	if len(addresses) == 0 {
+		return nil, nil, errors.New("could not parse any mnemonic")
+	}
+
+	return kr, addresses, nil
 }
