@@ -5,9 +5,9 @@ go 1.19
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
 require (
-	github.com/CoreumFoundation/coreum v0.0.0-20220913124954-c71024a4048f
+	github.com/CoreumFoundation/coreum v0.0.0-20220919140314-cc568bdbb77d
 	github.com/CoreumFoundation/coreum-tools v0.2.1
-	github.com/cosmos/cosmos-sdk v0.45.4
+	github.com/cosmos/cosmos-sdk v0.45.5
 	github.com/google/uuid v1.3.0
 	github.com/ignite/cli v0.22.2
 	github.com/labstack/echo/v4 v4.8.0
@@ -22,7 +22,7 @@ require (
 	filippo.io/edwards25519 v1.0.0-beta.2 // indirect
 	github.com/99designs/keyring v1.1.6 // indirect
 	github.com/ChainSafe/go-schnorrkel v0.0.0-20200405005733-88cbf1b4c40d // indirect
-	github.com/CosmWasm/wasmd v0.27.0 // indirect
+	github.com/CosmWasm/wasmd v0.28.0 // indirect
 	github.com/CosmWasm/wasmvm v1.0.0 // indirect
 	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/Microsoft/hcsshim v0.9.2 // indirect
