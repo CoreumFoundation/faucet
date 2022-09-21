@@ -35,9 +35,9 @@ to see what the default values are.
 
 The network chain ID (default "coreum-devnet-1")
 
-### --key-path
+### --key-path-mnemonic
 
-path to file containing hex encoded unarmored private keys, each line must contain one private key (default "private_keys_unarmored_hex.txt")
+path to file containing mnemonics of private keys, each line must contain one mnemonic (default "mnemonic.txt")
 
 ### --node
 <host>:<port> to Tendermint RPC interface for this chain (default "localhost:26657")
