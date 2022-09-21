@@ -11,26 +11,26 @@ import (
 
 // App implements core functionality
 type App struct {
-	client         Coreum
+	batcher        Batcher
 	transferAmount sdk.Coin
 	network        app.Network
 }
 
 // New returns a new instance of the App
 func New(
-	coreum Coreum,
+	batcher Batcher,
 	network app.Network,
 	transferAmount sdk.Coin,
 ) App {
 	return App{
-		client:         coreum,
+		batcher:        batcher,
 		network:        network,
 		transferAmount: transferAmount,
 	}
 }
 
-// Coreum indicates the required functionality to connect to coreum blockchain
-type Coreum interface {
+// Batcher indicates the required functionality to connect to coreum blockchain
+type Batcher interface {
 	SendToken(ctx context.Context, destAddress sdk.AccAddress, amount sdk.Coin) (string, error)
 }
 
@@ -50,7 +50,7 @@ func (a App) GiveFunds(ctx context.Context, address string) (string, error) {
 		)
 	}
 
-	txHash, err := a.client.SendToken(ctx, sdkAddr, a.transferAmount)
+	txHash, err := a.batcher.SendToken(ctx, sdkAddr, a.transferAmount)
 	if err != nil {
 		return "", errors.Wrapf(ErrUnableToTransferToken, "err:%s", err)
 	}

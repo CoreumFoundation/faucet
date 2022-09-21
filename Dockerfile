@@ -26,11 +26,11 @@ FROM alpine:3.16
 
 WORKDIR /
 
-VOLUME /data/private_keys_mnemonic.txt
+VOLUME mnemonic.txt
 
 COPY --from=builder /bin/faucet /bin/faucet
 
-ENV KEY_PATH=/data/private_keys_mnemonic.txt
+ENV KEY_PATH=mnemonic.txt
 
 EXPOSE 8090
 
