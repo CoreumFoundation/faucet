@@ -61,7 +61,7 @@ type request struct {
 	req          transferRequest
 }
 
-// TransferToken receives a single transfer token request, batch sends them and returns the result
+// SendToken receives a single transfer token request, batch sends them and returns the result
 func (b *Batcher) SendToken(ctx context.Context, destAddress sdk.AccAddress, amount sdk.Coin) (string, error) {
 	resChan, err := b.requestFund(destAddress, amount)
 	if err != nil {
@@ -146,6 +146,7 @@ func (b *Batcher) sendBatch(ctx context.Context, fromAddress sdk.AccAddress, ba 
 		requests = append(requests, r.req)
 	}
 	// TODO: retry can be implemented to make it more resilient to network errors.
+	//nolint:contextcheck // We don't want to cancel requests on shutdown sequence
 	txHash, err := b.client.TransferToken(ctx, fromAddress, requests...)
 	if err != nil {
 		rsp.err = err
