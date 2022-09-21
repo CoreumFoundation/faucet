@@ -71,7 +71,7 @@ func TestBatchSend(t *testing.T) {
 
 	wg.Wait()
 
-	assertT.Less(len(mock.calls), 20)
+	assertT.Less(len(mock.calls), 90)
 	assertT.GreaterOrEqual(len(mock.calls), 10)
 
 	totalAddressesCount := 0
