@@ -5,7 +5,7 @@ go 1.19
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
 require (
-	github.com/CoreumFoundation/coreum v0.0.0-20220919140314-cc568bdbb77d
+	github.com/CoreumFoundation/coreum v0.0.0-20220922085711-69d041c52036
 	github.com/CoreumFoundation/coreum-tools v0.2.1
 	github.com/cosmos/cosmos-sdk v0.45.5
 	github.com/google/uuid v1.3.0
