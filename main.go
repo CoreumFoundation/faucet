@@ -10,16 +10,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/ignite/cli/ignite/pkg/cosmoscmd"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"go.uber.org/zap"
 
-	coreumapp "github.com/CoreumFoundation/coreum/app"
+	coreumconfig "github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/faucet/app"
 	"github.com/CoreumFoundation/faucet/client/coreum"
@@ -50,7 +47,7 @@ func main() {
 		zap.String("privateKeysFile", cfg.privateKeysFile),
 		zap.String("node", cfg.node))
 
-	network, err := coreumapp.NetworkByChainID(coreumapp.ChainID(cfg.chainID))
+	network, err := coreumconfig.NetworkByChainID(coreumconfig.ChainID(cfg.chainID))
 	if err != nil {
 		log.Fatal(
 			"Unable to get network config for chain-id",
@@ -59,7 +56,7 @@ func main() {
 		)
 	}
 
-	if network.ChainID() == coreumapp.Mainnet {
+	if network.ChainID() == coreumconfig.Mainnet {
 		log.Fatal("running a faucet against mainnet is not allowed")
 	}
 
@@ -93,11 +90,7 @@ func main() {
 		)
 	}
 
-	mbm := module.NewBasicManager(
-		bank.AppModuleBasic{},
-		auth.AppModuleBasic{},
-	)
-	encodingConfig := cosmoscmd.MakeEncodingConfig(mbm)
+	encodingConfig := cosmoscmd.MakeEncodingConfig(config.NewModuleManager())
 	clientCtx := client.Context{}.
 		WithCodec(encodingConfig.Marshaler).
 		WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
@@ -157,7 +150,7 @@ type cfg struct {
 
 func getConfig(log *zap.Logger, flagSet *pflag.FlagSet) cfg {
 	var conf cfg
-	flagSet.StringVar(&conf.chainID, flagChainID, string(coreumapp.Devnet), "The network chain ID")
+	flagSet.StringVar(&conf.chainID, flagChainID, string(coreumconfig.Devnet), "The network chain ID")
 	flagSet.StringVar(&conf.node, flagNode, "tcp://localhost:26657", "<host>:<port> to Tendermint RPC interface for this chain")
 	flagSet.StringVar(&conf.address, flagAddress, ":8090", "<host>:<port> address to start listening for http requests")
 	flagSet.Int64Var(&conf.transferAmount, flagTransferAmount, 1000000, "how much to transfer in each request")

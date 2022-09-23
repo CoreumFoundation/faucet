@@ -4,8 +4,19 @@ import (
 	"os"
 	"strings"
 
+	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/spf13/pflag"
 )
+
+// NewModuleManager returns new module manager
+func NewModuleManager() module.BasicManager {
+	return module.NewBasicManager(
+		bank.AppModuleBasic{},
+		auth.AppModuleBasic{},
+	)
+}
 
 // WithEnv gets a flagSet and sets its values, with values read from env vars.
 // This function should be called only after all the flags are defined.
