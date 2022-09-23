@@ -6,21 +6,28 @@ package integrationtests
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"flag"
 	"io"
 	nethttp "net/http"
 	"testing"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	ctypes "github.com/tendermint/tendermint/rpc/core/types"
+	"go.uber.org/zap/zaptest"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/faucet/http"
 )
@@ -47,13 +54,17 @@ func TestMain(m *testing.M) {
 	cfg.clientCtx = app.
 		NewDefaultClientContext().
 		WithChainID(string(cfg.network.ChainID())).
-		WithClient(rpcClient)
+		WithClient(rpcClient).
+		WithBroadcastMode(flags.BroadcastBlock)
 
 	m.Run()
 }
 
 func TestTransferRequest(t *testing.T) {
-	ctx := context.Background()
+	log := zaptest.NewLogger(t)
+	ctx := logger.WithLogger(context.Background(), log)
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	t.Cleanup(cancel)
 	address := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String()
 
 	// request fund
@@ -61,6 +72,35 @@ func TestTransferRequest(t *testing.T) {
 	txHash, err := requestFunds(ctx, address)
 	require.NoError(t, err)
 	require.Len(t, txHash, 64)
+
+	// wait for one block, so all nodes are synced
+	txHashBytes, err := hex.DecodeString(txHash)
+	require.NoError(t, err)
+	var resultTx *ctypes.ResultTx
+	err = retry.Do(ctx, 200*time.Millisecond, func() error {
+		requestCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+		resultTx, err = clientCtx.Client.Tx(requestCtx, txHashBytes, false)
+		if err != nil {
+			return retry.Retryable(err)
+		}
+		return nil
+	})
+	require.NoError(t, err)
+
+	err = retry.Do(ctx, 200*time.Millisecond, func() error {
+		requestCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+
+		height := resultTx.Height + 1
+		_, err := clientCtx.Client.Block(requestCtx, &height)
+		if err != nil {
+			return retry.Retryable(err)
+		}
+
+		return nil
+	})
+	require.NoError(t, err)
 
 	// query funds
 	bankQueryClient := banktypes.NewQueryClient(clientCtx)
