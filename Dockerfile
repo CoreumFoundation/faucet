@@ -7,7 +7,7 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o /bin/faucet -tags=muslc -trimpath -ldflags="-w -s"
+RUN CGO_ENABLED=0 go build -o /bin/faucet -tags=muslc -trimpath -ldflags="-w -s"
 
 # Deploy Stage
 FROM alpine:3.16
