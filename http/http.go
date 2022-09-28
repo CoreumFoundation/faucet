@@ -33,6 +33,7 @@ func (h HTTP) ListenAndServe(ctx context.Context, address string) error {
 	h.server.Use(middleware.BodyLimit("4MB"))
 	h.server.GET("/api/faucet/v1/status", h.statusHandle)
 	h.server.POST("/api/faucet/v1/send-money", h.sendMoneyHandle)
+	h.server.POST("/api/faucet/v1/send-money-gen-privkey", h.sendMoneyGenPrivkeyHandle)
 
 	return h.server.Start(ctx, address, 0)
 }
