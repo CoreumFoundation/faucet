@@ -8,13 +8,13 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"go.uber.org/zap"
 
-	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/faucet/pkg/logger"
 )
 
 // New returns an instance of the Client interface
-func New(network app.Network, clientCtx cosmosclient.Context, txf tx.Factory) Client {
+func New(network config.Network, clientCtx cosmosclient.Context, txf tx.Factory) Client {
 	return Client{
 		network:   network,
 		clientCtx: clientCtx,
@@ -25,7 +25,7 @@ func New(network app.Network, clientCtx cosmosclient.Context, txf tx.Factory) Cl
 // Client is used to communicate with coreum blockchain
 type Client struct {
 	clientCtx cosmosclient.Context
-	network   app.Network
+	network   config.Network
 	txf       tx.Factory
 }
 

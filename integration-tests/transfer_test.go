@@ -28,8 +28,9 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	"github.com/CoreumFoundation/coreum/app"
+	coreumconfig "github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/faucet/http"
+	"github.com/CoreumFoundation/faucet/pkg/config"
 )
 
 type testConfig struct {
@@ -37,7 +38,7 @@ type testConfig struct {
 	faucetAddress  string
 	clientCtx      client.Context
 	transferAmount string
-	network        app.Network
+	network        coreumconfig.Network
 }
 
 var cfg testConfig
@@ -49,10 +50,10 @@ func TestMain(m *testing.M) {
 	flag.Parse()
 	rpcClient, err := client.NewClientFromNode(cfg.coredAddress)
 	must.OK(err)
-	cfg.network, _ = app.NetworkByChainID(app.Devnet)
+	cfg.network, _ = coreumconfig.NetworkByChainID(coreumconfig.Devnet)
 	cfg.network.SetupPrefixes()
-	cfg.clientCtx = app.
-		NewDefaultClientContext().
+	cfg.clientCtx = coreumconfig.
+		NewClientContext(config.NewModuleManager()).
 		WithChainID(string(cfg.network.ChainID())).
 		WithClient(rpcClient).
 		WithBroadcastMode(flags.BroadcastBlock)
