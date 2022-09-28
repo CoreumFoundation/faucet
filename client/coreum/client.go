@@ -60,8 +60,9 @@ func (c Client) TransferToken(
 		WithFrom(fromAddress.String()).
 		WithFromAddress(fromAddress)
 
+	msgGas, _ := c.network.DeterministicGas().GasRequiredByMessage(&banktypes.MsgSend{})
 	txf := c.txf.
-		WithGas(c.network.DeterministicGas().BankSend * uint64(len(msgs))).
+		WithGas(msgGas * uint64(len(msgs))).
 		WithGasPrices(c.network.FeeModel().Params().InitialGasPrice.String() + c.network.TokenSymbol())
 	result, err := tx.BroadcastTx(ctx, clientCtx, txf, msgs...)
 	if err != nil {
