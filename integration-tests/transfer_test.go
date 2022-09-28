@@ -75,7 +75,7 @@ func TestTransferRequest(t *testing.T) {
 	require.Len(t, txHash, 64)
 
 	// wait for one block, so all nodes are synced
-	// it is possible and the transfer and query requests go to different nodes and although
+	// it is possible that the transfer and query requests go to different nodes and although
 	// the transfer is complete, the query will go to a different node which is not yet synced up
 	// and does not have the transaction included in a block and its state will be different.
 	// By waiting for one block we make sure that all nodes are synced on the previous block.
