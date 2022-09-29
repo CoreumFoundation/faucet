@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	nethttp "net/http"
 	"runtime"
 
 	"github.com/labstack/echo/v4/middleware"
@@ -36,8 +37,8 @@ func (h HTTP) ListenAndServe(ctx context.Context, address string) error {
 	)
 
 	apiv1.GET("/status", h.statusHandle)
-	apiv1.POST("/send-money", h.sendMoneyHandle)
-
+	apiv1.POST("/fund", h.fundHandle)
+	apiv1.POST("/gen-funded", h.genFundedHandle)
 	return h.server.Start(ctx, address, 0)
 }
 
@@ -49,25 +50,25 @@ type StatusResponse struct {
 }
 
 func (h HTTP) statusHandle(ctx http.Context) error {
-	return ctx.JSON(200, StatusResponse{
+	return ctx.JSON(nethttp.StatusOK, StatusResponse{
 		Version: "v1.0.0",
 		Status:  "listening",
 		Go:      runtime.Version(),
 	})
 }
 
-// SendMoneyRequest is the input to GiveFunds request
-type SendMoneyRequest struct {
+// FundRequest is the input to GiveFunds request
+type FundRequest struct {
 	Address string `json:"address"`
 }
 
-// SendMoneyResponse is the output to GiveFunds request
-type SendMoneyResponse struct {
+// FundResponse is the output to GiveFunds request
+type FundResponse struct {
 	TxHash string `json:"txHash"`
 }
 
-func (h HTTP) sendMoneyHandle(ctx http.Context) error {
-	var rqBody SendMoneyRequest
+func (h HTTP) fundHandle(ctx http.Context) error {
+	var rqBody FundRequest
 	if err := ctx.Bind(&rqBody); err != nil {
 		return err
 	}
@@ -77,5 +78,5 @@ func (h HTTP) sendMoneyHandle(ctx http.Context) error {
 		return err
 	}
 
-	return ctx.JSON(200, SendMoneyResponse{TxHash: txHash})
+	return ctx.JSON(nethttp.StatusOK, FundResponse{TxHash: txHash})
 }
