@@ -9,6 +9,7 @@ import (
 )
 
 var (
+	// update coin type after we register our coin type into BIP44
 	hdPath = hd.CreateHDPath(118, 0, 0).String()
 )
 

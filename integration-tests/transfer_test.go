@@ -94,7 +94,7 @@ func TestTransferRequest(t *testing.T) {
 func waitForTxInclusionAndSync(ctx context.Context, clientCtx client.Context, txHash string) error {
 	txHashBytes, err := hex.DecodeString(txHash)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	var resultTx *ctypes.ResultTx
 	err = retry.Do(ctx, 200*time.Millisecond, func() error {
@@ -181,32 +181,32 @@ func requestFunds(ctx context.Context, address string) (string, error) {
 	payloadBuffer := bytes.NewBuffer(nil)
 	err := json.NewEncoder(payloadBuffer).Encode(sendMoneyReq)
 	if err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 
 	client := &nethttp.Client{}
 	req, err := nethttp.NewRequestWithContext(ctx, method, url, payloadBuffer)
 	if err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 
 	req.Header.Add("Content-Type", "application/json")
 
 	res, err := client.Do(req)
 	if err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
+	defer res.Body.Close()
 	if res.StatusCode > 299 {
 		body, _ := io.ReadAll(res.Body)
 		return "", errors.Errorf("non 2xx response, body: %s", body)
 	}
-	defer res.Body.Close()
 
 	decoder := json.NewDecoder(res.Body)
 	var sendMoneyResponse http.SendMoneyResponse
 	err = decoder.Decode(&sendMoneyResponse)
 	if err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 
 	return sendMoneyResponse.TxHash, nil
@@ -219,24 +219,24 @@ func requestFundsWithPrivkey(ctx context.Context) (http.SendMoneyGenPrivkeyRespo
 	client := &nethttp.Client{}
 	req, err := nethttp.NewRequestWithContext(ctx, method, url, nil)
 	if err != nil {
-		return http.SendMoneyGenPrivkeyResponse{}, err
+		return http.SendMoneyGenPrivkeyResponse{}, errors.WithStack(err)
 	}
 
 	res, err := client.Do(req)
 	if err != nil {
-		return http.SendMoneyGenPrivkeyResponse{}, err
+		return http.SendMoneyGenPrivkeyResponse{}, errors.WithStack(err)
 	}
+	defer res.Body.Close()
 	if res.StatusCode > 299 {
 		body, _ := io.ReadAll(res.Body)
 		return http.SendMoneyGenPrivkeyResponse{}, errors.Errorf("non 2xx response, body: %s", body)
 	}
-	defer res.Body.Close()
 
 	decoder := json.NewDecoder(res.Body)
 	var responseStruct http.SendMoneyGenPrivkeyResponse
 	err = decoder.Decode(&responseStruct)
 	if err != nil {
-		return http.SendMoneyGenPrivkeyResponse{}, err
+		return http.SendMoneyGenPrivkeyResponse{}, errors.WithStack(err)
 	}
 
 	return responseStruct, nil

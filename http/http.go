@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	nethttp "net/http"
 	"runtime"
 
 	"github.com/labstack/echo/v4/middleware"
@@ -46,7 +47,7 @@ type StatusResponse struct {
 }
 
 func (h HTTP) statusHandle(ctx http.Context) error {
-	return ctx.JSON(200, StatusResponse{
+	return ctx.JSON(nethttp.StatusOK, StatusResponse{
 		Version: "v1.0.0",
 		Status:  "listening",
 		Go:      runtime.Version(),
@@ -74,5 +75,5 @@ func (h HTTP) sendMoneyHandle(ctx http.Context) error {
 		return err
 	}
 
-	return ctx.JSON(200, SendMoneyResponse{TxHash: txHash})
+	return ctx.JSON(nethttp.StatusOK, SendMoneyResponse{TxHash: txHash})
 }
