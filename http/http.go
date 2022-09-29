@@ -37,9 +37,8 @@ func (h HTTP) ListenAndServe(ctx context.Context, address string) error {
 	)
 
 	apiv1.GET("/status", h.statusHandle)
-	apiv1.POST("/send-money", h.sendMoneyHandle)
-	apiv1.POST("/send-money-gen-privkey", h.sendMoneyGenPrivkeyHandle)
-
+	apiv1.POST("/fund", h.sendMoneyHandle)
+	apiv1.POST("/gen-funded", h.sendMoneyGenPrivkeyHandle)
 	return h.server.Start(ctx, address, 0)
 }
 
