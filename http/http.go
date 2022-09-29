@@ -29,10 +29,14 @@ func New(app app.App, logger *zap.Logger) HTTP {
 
 // ListenAndServe starts listening for http requests
 func (h HTTP) ListenAndServe(ctx context.Context, address string) error {
-	h.server.Use(writeErrorMiddleware(h.logger))
-	h.server.Use(middleware.BodyLimit("4MB"))
-	h.server.GET("/api/faucet/v1/status", h.statusHandle)
-	h.server.POST("/api/faucet/v1/send-money", h.sendMoneyHandle)
+	apiv1 := h.server.Group(
+		"/api/faucet/v1",
+		writeErrorMiddleware(h.logger),
+		middleware.BodyLimit("4MB"),
+	)
+
+	apiv1.GET("/status", h.statusHandle)
+	apiv1.POST("/send-money", h.sendMoneyHandle)
 
 	return h.server.Start(ctx, address, 0)
 }
