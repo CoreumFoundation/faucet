@@ -175,7 +175,7 @@ func requestFunds(ctx context.Context, address string) (string, error) {
 	url := cfg.faucetAddress + "/api/faucet/v1/send-money"
 	method := "POST"
 
-	sendMoneyReq := http.SendMoneyRequest{
+	sendMoneyReq := http.FundRequest{
 		Address: address,
 	}
 	payloadBuffer := bytes.NewBuffer(nil)
@@ -203,7 +203,7 @@ func requestFunds(ctx context.Context, address string) (string, error) {
 	}
 
 	decoder := json.NewDecoder(res.Body)
-	var sendMoneyResponse http.SendMoneyResponse
+	var sendMoneyResponse http.FundResponse
 	err = decoder.Decode(&sendMoneyResponse)
 	if err != nil {
 		return "", errors.WithStack(err)
@@ -212,31 +212,31 @@ func requestFunds(ctx context.Context, address string) (string, error) {
 	return sendMoneyResponse.TxHash, nil
 }
 
-func requestFundsWithPrivkey(ctx context.Context) (http.SendMoneyGenPrivkeyResponse, error) {
+func requestFundsWithPrivkey(ctx context.Context) (http.GenFundedResponse, error) {
 	url := cfg.faucetAddress + "/api/faucet/v1/send-money-gen-privkey"
 	method := "POST"
 
 	client := &nethttp.Client{}
 	req, err := nethttp.NewRequestWithContext(ctx, method, url, nil)
 	if err != nil {
-		return http.SendMoneyGenPrivkeyResponse{}, errors.WithStack(err)
+		return http.GenFundedResponse{}, errors.WithStack(err)
 	}
 
 	res, err := client.Do(req)
 	if err != nil {
-		return http.SendMoneyGenPrivkeyResponse{}, errors.WithStack(err)
+		return http.GenFundedResponse{}, errors.WithStack(err)
 	}
 	defer res.Body.Close()
 	if res.StatusCode > 299 {
 		body, _ := io.ReadAll(res.Body)
-		return http.SendMoneyGenPrivkeyResponse{}, errors.Errorf("non 2xx response, body: %s", body)
+		return http.GenFundedResponse{}, errors.Errorf("non 2xx response, body: %s", body)
 	}
 
 	decoder := json.NewDecoder(res.Body)
-	var responseStruct http.SendMoneyGenPrivkeyResponse
+	var responseStruct http.GenFundedResponse
 	err = decoder.Decode(&responseStruct)
 	if err != nil {
-		return http.SendMoneyGenPrivkeyResponse{}, errors.WithStack(err)
+		return http.GenFundedResponse{}, errors.WithStack(err)
 	}
 
 	return responseStruct, nil
