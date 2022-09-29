@@ -1,6 +1,10 @@
 package http
 
-import "github.com/CoreumFoundation/faucet/pkg/http"
+import (
+	nethttp "net/http"
+
+	"github.com/CoreumFoundation/faucet/pkg/http"
+)
 
 // GenFundedResponse is the output to GiveFunds request
 type GenFundedResponse struct {
@@ -15,7 +19,7 @@ func (h HTTP) genFundedHandle(ctx http.Context) error {
 		return err
 	}
 
-	return ctx.JSON(200, GenFundedResponse{
+	return ctx.JSON(nethttp.StatusOK, GenFundedResponse{
 		TxHash:   rsp.TxHash,
 		Mnemonic: rsp.Mnemonic,
 		Address:  rsp.Address,
