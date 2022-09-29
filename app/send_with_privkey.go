@@ -12,6 +12,7 @@ var (
 	hdPath = hd.CreateHDPath(118, 0, 0).String()
 )
 
+// GenPrivkeyAndFundResponse is the response returned from GenPrivkeyAndFund
 type GenPrivkeyAndFundResponse struct {
 	TxHash   string
 	Mnemonic string
