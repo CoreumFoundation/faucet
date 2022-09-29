@@ -172,7 +172,7 @@ func TestTransferRequest_WrongAddress(t *testing.T) {
 }
 
 func requestFunds(ctx context.Context, address string) (string, error) {
-	url := cfg.faucetAddress + "/api/faucet/v1/send-money"
+	url := cfg.faucetAddress + "/api/faucet/v1/fund"
 	method := "POST"
 
 	sendMoneyReq := http.FundRequest{
@@ -213,7 +213,7 @@ func requestFunds(ctx context.Context, address string) (string, error) {
 }
 
 func requestFundsWithPrivkey(ctx context.Context) (http.GenFundedResponse, error) {
-	url := cfg.faucetAddress + "/api/faucet/v1/send-money-gen-privkey"
+	url := cfg.faucetAddress + "/api/faucet/v1/gen-funded"
 	method := "POST"
 
 	client := &nethttp.Client{}
