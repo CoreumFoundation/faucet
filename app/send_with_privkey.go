@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	// update coin type after we register our coin type into BIP44
+	// TODO: update coin type after we register our coin type into BIP44
 	hdPath = hd.CreateHDPath(118, 0, 0).String()
 )
 
@@ -26,9 +26,6 @@ func (a App) GenPrivkeyAndFund(ctx context.Context) (GenPrivkeyAndFundResponse, 
 	info, mnemonic, err := kr.NewMnemonic("", keyring.English, hdPath, "", hd.Secp256k1)
 	if err != nil {
 		return GenPrivkeyAndFundResponse{}, errors.Wrapf(ErrUnableToTransferToken, "err:%s", err)
-	}
-	if mnemonic == "" {
-		return GenPrivkeyAndFundResponse{}, ErrUnableToTransferToken
 	}
 	sdkAddr := info.GetAddress()
 	txHash, err := a.batcher.SendToken(ctx, sdkAddr, a.transferAmount)
