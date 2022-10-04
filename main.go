@@ -60,7 +60,7 @@ func main() {
 		log.Fatal("running a faucet against mainnet is not allowed")
 	}
 
-	network.SetupPrefixes()
+	network.SetSDKConfig()
 
 	transferAmount := sdk.Coin{
 		Amount: sdk.NewInt(cfg.transferAmount),

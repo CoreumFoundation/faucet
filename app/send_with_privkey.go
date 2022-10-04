@@ -5,35 +5,35 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 )
 
 var (
-	// TODO: update coin type after we register our coin type into BIP44
-	hdPath = hd.CreateHDPath(118, 0, 0).String()
+	hdPath = sdk.GetConfig().GetFullBIP44Path()
 )
 
-// GenPrivkeyAndFundResponse is the response returned from GenPrivkeyAndFund
-type GenPrivkeyAndFundResponse struct {
+// GenPrivKeyAndFundResponse is the response returned from GenPrivkeyAndFund
+type GenPrivKeyAndFundResponse struct {
 	TxHash   string
 	Mnemonic string
 	Address  string
 }
 
 // GenPrivkeyAndFund generates a private key and funds it
-func (a App) GenPrivkeyAndFund(ctx context.Context) (GenPrivkeyAndFundResponse, error) {
+func (a App) GenPrivkeyAndFund(ctx context.Context) (GenPrivKeyAndFundResponse, error) {
 	kr := keyring.NewInMemory()
 	info, mnemonic, err := kr.NewMnemonic("", keyring.English, hdPath, "", hd.Secp256k1)
 	if err != nil {
-		return GenPrivkeyAndFundResponse{}, errors.Wrapf(ErrUnableToTransferToken, "err:%s", err)
+		return GenPrivKeyAndFundResponse{}, errors.Wrapf(ErrUnableToTransferToken, "err:%s", err)
 	}
 	sdkAddr := info.GetAddress()
 	txHash, err := a.batcher.SendToken(ctx, sdkAddr, a.transferAmount)
 	if err != nil {
-		return GenPrivkeyAndFundResponse{}, errors.Wrapf(ErrUnableToTransferToken, "err:%s", err)
+		return GenPrivKeyAndFundResponse{}, errors.Wrapf(ErrUnableToTransferToken, "err:%s", err)
 	}
 
-	return GenPrivkeyAndFundResponse{
+	return GenPrivKeyAndFundResponse{
 		TxHash:   txHash,
 		Mnemonic: mnemonic,
 		Address:  sdkAddr.String(),
