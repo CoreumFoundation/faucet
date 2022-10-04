@@ -11,7 +11,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
-	"github.com/ignite/cli/ignite/pkg/cosmoscmd"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"go.uber.org/zap"
@@ -60,7 +59,7 @@ func main() {
 		log.Fatal("running a faucet against mainnet is not allowed")
 	}
 
-	network.SetupPrefixes()
+	network.SetSDKConfig()
 
 	transferAmount := sdk.Coin{
 		Amount: sdk.NewInt(cfg.transferAmount),
@@ -90,19 +89,13 @@ func main() {
 		)
 	}
 
-	encodingConfig := cosmoscmd.MakeEncodingConfig(config.NewModuleManager())
-	clientCtx := client.Context{}.
-		WithCodec(encodingConfig.Marshaler).
-		WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
-		WithTxConfig(encodingConfig.TxConfig).
-		WithLegacyAmino(encodingConfig.Amino).
-		WithNodeURI(cfg.node).
+	clientCtx := tx.NewClientContext(config.NewModuleManager()).
 		WithChainID(string(network.ChainID())).
-		WithBroadcastMode(flags.BroadcastBlock).
-		WithClient(rpcClient)
+		WithClient(rpcClient).
+		WithBroadcastMode(flags.BroadcastBlock)
 
 	txf := tx.Factory{}.
-		WithTxConfig(clientCtx.TxConfig).
+		WithTxConfig(clientCtx.TxConfig()).
 		WithKeybase(kr).
 		WithChainID(string(network.ChainID())).
 		WithSignMode(signing.SignMode_SIGN_MODE_DIRECT) //nolint:nosnakecase
@@ -177,13 +170,13 @@ func newKeyringFromFile(path string) (keyring.Keyring, []sdk.AccAddress, error) 
 	for scanner.Scan() {
 		mnemonic := scanner.Text()
 		tempKr := keyring.NewInMemory()
-		info, err := tempKr.NewAccount("temp", mnemonic, "", "", hd.Secp256k1)
+		info, err := tempKr.NewAccount("temp", mnemonic, "", sdk.GetConfig().GetFullBIP44Path(), hd.Secp256k1)
 		if err != nil {
 			return nil, nil, errors.Wrapf(err, "unable to parse mnemonic key")
 		}
 		address := info.GetAddress()
 		addresses = append(addresses, address)
-		_, err = kr.NewAccount(address.String(), mnemonic, "", "", hd.Secp256k1)
+		_, err = kr.NewAccount(address.String(), mnemonic, "", sdk.GetConfig().GetFullBIP44Path(), hd.Secp256k1)
 		if err != nil {
 			return nil, nil, errors.Wrapf(err, "unable to parse mnemonic key")
 		}

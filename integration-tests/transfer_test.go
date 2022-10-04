@@ -29,6 +29,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	coreumconfig "github.com/CoreumFoundation/coreum/pkg/config"
+	coreumtx "github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/faucet/http"
 	"github.com/CoreumFoundation/faucet/pkg/config"
 )
@@ -36,7 +37,7 @@ import (
 type testConfig struct {
 	coredAddress   string
 	faucetAddress  string
-	clientCtx      client.Context
+	clientCtx      coreumtx.ClientContext
 	transferAmount string
 	network        coreumconfig.Network
 }
@@ -51,9 +52,8 @@ func TestMain(m *testing.M) {
 	rpcClient, err := client.NewClientFromNode(cfg.coredAddress)
 	must.OK(err)
 	cfg.network, _ = coreumconfig.NetworkByChainID(coreumconfig.Devnet)
-	cfg.network.SetupPrefixes()
-	cfg.clientCtx = coreumconfig.
-		NewClientContext(config.NewModuleManager()).
+	cfg.network.SetSDKConfig()
+	cfg.clientCtx = coreumtx.NewClientContext(config.NewModuleManager()).
 		WithChainID(string(cfg.network.ChainID())).
 		WithClient(rpcClient).
 		WithBroadcastMode(flags.BroadcastBlock)
@@ -91,7 +91,7 @@ func TestTransferRequest(t *testing.T) {
 // the tx is complete, the query will go to a different node which is not yet synced up
 // and does not have the transaction included in a block and its state will be different.
 // By waiting for one block we make sure that all nodes are synced on the previous block.
-func waitForTxInclusionAndSync(ctx context.Context, clientCtx client.Context, txHash string) error {
+func waitForTxInclusionAndSync(ctx context.Context, clientCtx coreumtx.ClientContext, txHash string) error {
 	txHashBytes, err := hex.DecodeString(txHash)
 	if err != nil {
 		return errors.WithStack(err)
@@ -100,7 +100,7 @@ func waitForTxInclusionAndSync(ctx context.Context, clientCtx client.Context, tx
 	err = retry.Do(ctx, 200*time.Millisecond, func() error {
 		requestCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
-		resultTx, err = clientCtx.Client.Tx(requestCtx, txHashBytes, false)
+		resultTx, err = clientCtx.Client().Tx(requestCtx, txHashBytes, false)
 		if err != nil {
 			return retry.Retryable(err)
 		}
@@ -115,7 +115,7 @@ func waitForTxInclusionAndSync(ctx context.Context, clientCtx client.Context, tx
 		defer cancel()
 
 		height := resultTx.Height + 1
-		_, err := clientCtx.Client.Block(requestCtx, &height)
+		_, err := clientCtx.Client().Block(requestCtx, &height)
 		if err != nil {
 			return retry.Retryable(err)
 		}
