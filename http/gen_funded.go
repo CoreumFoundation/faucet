@@ -14,14 +14,10 @@ type GenFundedResponse struct {
 }
 
 func (h HTTP) genFundedHandle(ctx http.Context) error {
-	rsp, err := h.app.GenPrivkeyAndFund(ctx.Request().Context())
+	result, err := h.app.GenMnemonicAndFund(ctx.Request().Context())
 	if err != nil {
 		return err
 	}
 
-	return ctx.JSON(nethttp.StatusOK, GenFundedResponse{
-		TxHash:   rsp.TxHash,
-		Mnemonic: rsp.Mnemonic,
-		Address:  rsp.Address,
-	})
+	return ctx.JSON(nethttp.StatusOK, GenFundedResponse(result))
 }
