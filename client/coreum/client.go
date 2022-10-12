@@ -58,14 +58,9 @@ func (c Client) TransferToken(
 		WithFromName(fromAddress.String()).
 		WithFromAddress(fromAddress)
 
-	deterministicGas := c.network.DeterministicGas()
-
-	// FIXME (wojtek): This is a hacky way of computing gas. Use gas estimation instead, once it's available in `tx` package.
-	msgGas, _ := deterministicGas.GasRequiredByMessage(&banktypes.MsgSend{})
-	gas := deterministicGas.FixedGas + uint64(len(msgs))*(msgGas+deterministicGas.FreeBytes)
 	txf := c.txf.
-		WithGas(gas).
-		WithGasPrices(c.network.FeeModel().Params().InitialGasPrice.String() + c.network.TokenSymbol())
+		WithSimulateAndExecute(true).
+		WithGasAdjustment(1.5)
 	result, err := tx.BroadcastTx(ctx, clientCtx, txf, msgs...)
 	if err != nil {
 		return "", err
