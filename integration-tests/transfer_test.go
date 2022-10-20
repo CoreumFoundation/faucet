@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package integrationtests
 
 import (
@@ -51,7 +48,7 @@ func TestMain(m *testing.M) {
 	flag.Parse()
 	rpcClient, err := client.NewClientFromNode(cfg.coredAddress)
 	must.OK(err)
-	cfg.network, _ = coreumconfig.NetworkByChainID(coreumconfig.Devnet)
+	cfg.network, _ = coreumconfig.NetworkByChainID(coreumconfig.ChainIDDev)
 	cfg.network.SetSDKConfig()
 	cfg.clientCtx = coreumtx.NewClientContext(config.NewModuleManager()).
 		WithChainID(string(cfg.network.ChainID())).
@@ -83,7 +80,7 @@ func TestTransferRequest(t *testing.T) {
 	require.NoError(t, err)
 
 	// make assertions
-	assert.EqualValues(t, cfg.transferAmount, resp.Balances.AmountOf(cfg.network.TokenSymbol()).String())
+	assert.EqualValues(t, cfg.transferAmount, resp.Balances.AmountOf(cfg.network.BaseDenom()).String())
 }
 
 // waitForTxInclusionAndSync waits for one block, so all nodes are synced
@@ -149,7 +146,7 @@ func TestTransferRequestWithGenPrivkey(t *testing.T) {
 	require.NoError(t, err)
 
 	// make assertions
-	assert.EqualValues(t, cfg.transferAmount, resp.Balances.AmountOf(cfg.network.TokenSymbol()).String())
+	assert.EqualValues(t, cfg.transferAmount, resp.Balances.AmountOf(cfg.network.BaseDenom()).String())
 }
 
 func TestTransferRequest_WrongAddress(t *testing.T) {
