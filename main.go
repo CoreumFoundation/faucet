@@ -55,7 +55,7 @@ func main() {
 		)
 	}
 
-	if network.ChainID() == coreumconfig.Mainnet {
+	if network.ChainID() == coreumconfig.ChainIDMain {
 		log.Fatal("running a faucet against mainnet is not allowed")
 	}
 
@@ -63,7 +63,7 @@ func main() {
 
 	transferAmount := sdk.Coin{
 		Amount: sdk.NewInt(cfg.transferAmount),
-		Denom:  network.TokenSymbol(),
+		Denom:  network.BaseDenom(),
 	}
 
 	kr, addresses, err := newKeyringFromFile(cfg.fileMnemonic)
@@ -143,7 +143,7 @@ type cfg struct {
 
 func getConfig(log *zap.Logger, flagSet *pflag.FlagSet) cfg {
 	var conf cfg
-	flagSet.StringVar(&conf.chainID, flagChainID, string(coreumconfig.Devnet), "The network chain ID")
+	flagSet.StringVar(&conf.chainID, flagChainID, string(coreumconfig.ChainIDDev), "The network chain ID")
 	flagSet.StringVar(&conf.node, flagNode, "tcp://localhost:26657", "<host>:<port> to Tendermint RPC interface for this chain")
 	flagSet.StringVar(&conf.address, flagAddress, ":8090", "<host>:<port> address to start listening for http requests")
 	flagSet.Int64Var(&conf.transferAmount, flagTransferAmount, 1000000, "how much to transfer in each request")
