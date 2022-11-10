@@ -44,7 +44,7 @@ func (c Client) TransferToken(
 	for _, rq := range requests {
 		toAddressList = append(toAddressList, rq.destAddress.String())
 	}
-	log := logger.Get(ctx).With(zap.Stringer("from_address", fromAddress), zap.Strings("to_addresses", toAddressList))
+	log := logger.Get(ctx).With(zap.Stringer("fromAddress", fromAddress), zap.Strings("toAddresses", toAddressList))
 	log.Info("Sending tokens")
 	for _, rq := range requests {
 		msg := &banktypes.MsgSend{

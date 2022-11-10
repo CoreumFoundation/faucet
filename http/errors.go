@@ -7,23 +7,17 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/faucet/app"
 	"github.com/CoreumFoundation/faucet/pkg/http"
 )
 
-func withEchoContext(logger *zap.Logger, c http.Context) *zap.Logger {
-	return logger.With(
-		zap.String("request_id", c.Request().Header.Get(http.HeaderXRequestID)),
-	)
-}
-
-func writeErrorMiddleware(logger *zap.Logger) func(http.HandlerFunc) http.HandlerFunc {
+func writeErrorMiddleware() func(http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(c http.Context) error {
 			err := next(c)
 			if err != nil {
-				logger := withEchoContext(logger, c)
-				logger.Error("Error processing request", zap.Error(err))
+				logger.Get(c.Request().Context()).Error("Error processing request", zap.Error(err))
 				err := mapError(err)
 				return c.JSON(err.Status(), err)
 			}
@@ -87,6 +81,7 @@ func mapError(err error) APIError {
 		app.ErrAddressPrefixUnsupported: newSingleAPIError("address.invalid", app.ErrAddressPrefixUnsupported.Error(), stdHttp.StatusNotAcceptable),
 		app.ErrInvalidAddressFormat:     newSingleAPIError("address.invalid", app.ErrInvalidAddressFormat.Error(), stdHttp.StatusNotAcceptable),
 		app.ErrUnableToTransferToken:    newSingleAPIError("server.internal_error", app.ErrUnableToTransferToken.Error(), stdHttp.StatusInternalServerError),
+		http.ErrRateLimitExhausted:      newSingleAPIError("server.rate_limit", http.ErrRateLimitExhausted.Error(), stdHttp.StatusForbidden),
 	}
 
 	for e, internalErr := range errList {

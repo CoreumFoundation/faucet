@@ -10,6 +10,8 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 )
 
 // re-export types from echo library for convenience, so the users will not need to import echo library
@@ -25,45 +27,47 @@ type (
 )
 
 // New returns a server instance
-func New(logger *zap.Logger) Server {
+func New(log *zap.Logger, m ...MiddlewareFunc) Server {
+	limiter := NewWeightedWindowLimiter(2, time.Hour)
+
 	e := echo.New()
 	e.Logger.SetLevel(99)
 	e.HideBanner = true
 	e.HidePort = true
-	e.Use(addLoggerToRequestContext(logger))
-	e.Use(requestIDMiddleware)
+	e.Use(prepareRequestContextMiddleware(log))
+	e.Use(m...)
+	e.Use(limiterMiddleware(limiter))
 	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 		LogURI:     true,
 		LogStatus:  true,
 		LogHeaders: []string{echo.HeaderXForwardedFor, HeaderXRequestID},
 		LogMethod:  true,
 		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
-			logger.Info("request",
-				zap.String("URI", v.URI),
-				zap.Int("status", v.Status),
-				zap.Strings("user_real_ip", v.Headers[echo.HeaderXForwardedFor]),
-				zap.String("request_id", v.Headers[HeaderXRequestID][0]),
-				zap.String("method", v.Method),
-			)
-
+			logger.Get(c.Request().Context()).Info("Request", zap.Int("status", v.Status))
 			return nil
 		},
 	}))
-	return Server{Echo: e, logger: logger}
+	return Server{
+		Echo:    e,
+		limiter: limiter,
+	}
 }
 
 // Server exposes functionalities needed to run an http server
 type Server struct {
 	*echo.Echo
-	logger *zap.Logger
+
+	limiter *WeightedWindowLimiter
 }
 
 // Start begins listening and serving http requests with graceful shut down. graceful shutdown signal should be
 // passed to the function as input and should come from the signal package.
 // NOTE: graceful shutdown does not handle websocket and other hijacked connections (because it relies on http.server#Shutdown)
 func (s Server) Start(ctx context.Context, listenAddress string, forceShutdownTimeout time.Duration) error {
+	log := logger.Get(ctx)
+
 	// Start server
-	exitListening := make(chan error, 1)
+	exitListening := make(chan error, 2)
 	listener, err := net.Listen("tcp", listenAddress)
 	if err != nil {
 		return errors.Wrap(err, "unable to listen on address")
@@ -72,15 +76,24 @@ func (s Server) Start(ctx context.Context, listenAddress string, forceShutdownTi
 		var err error
 		defer func() {
 			if rec := recover(); rec != nil {
-				err = errors.Wrapf(err, "listen paniced %s", rec)
-				s.logger.Error("listen paniced", zap.Error(err))
+				err = errors.Wrapf(err, "listen panicked: %s", rec)
 			}
 			exitListening <- err
 		}()
-		s.logger.Info("Started listening for http connections", zap.String("address", listenAddress))
+		log.Info("Started listening for http connections", zap.String("address", listenAddress))
 		if err = http.Serve(listener, s.Echo); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			err = errors.Wrap(err, "Error listening for connections")
 		}
+	}()
+	go func() {
+		var err error
+		defer func() {
+			if rec := recover(); rec != nil {
+				err = errors.Wrapf(err, "limiter panicked: %s", rec)
+			}
+			exitListening <- err
+		}()
+		err = s.limiter.Run(ctx)
 	}()
 
 	select {
@@ -95,12 +108,12 @@ func (s Server) Start(ctx context.Context, listenAddress string, forceShutdownTi
 	ctx, cancel := context.WithTimeout(context.Background(), forceShutdownTimeout)
 	defer cancel()
 
-	s.logger.Info("Starting graceful shutdown")
+	log.Info("Starting graceful shutdown")
 	//nolint:contextcheck // New context is created to support graceful shutdown and let pending requests to be completed
 	if err := s.Shutdown(ctx); err != nil {
 		return errors.Wrap(err, "Error shutting down server")
 	}
 
-	s.logger.Info("Server shutdown successfully")
+	log.Info("Server shutdown successfully")
 	return nil
 }
