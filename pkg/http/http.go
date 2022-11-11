@@ -105,15 +105,35 @@ func (s Server) Start(ctx context.Context, listenAddress string, forceShutdownTi
 		forceShutdownTimeout = 30 * time.Second
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), forceShutdownTimeout)
+	ctx, cancel := context.WithTimeout(reopenCtx(ctx), forceShutdownTimeout)
 	defer cancel()
 
 	log.Info("Starting graceful shutdown")
-	//nolint:contextcheck // New context is created to support graceful shutdown and let pending requests to be completed
 	if err := s.Shutdown(ctx); err != nil {
 		return errors.Wrap(err, "Error shutting down server")
 	}
 
 	log.Info("Server shutdown successfully")
+	return nil
+}
+
+func reopenCtx(ctx context.Context) context.Context {
+	return reopened{Context: ctx}
+}
+
+type reopened struct {
+	//nolint:containedctx // this struct exists to wrap a context
+	context.Context
+}
+
+func (reopened) Deadline() (time.Time, bool) {
+	return time.Time{}, false
+}
+
+func (reopened) Done() <-chan struct{} {
+	return nil
+}
+
+func (reopened) Err() error {
 	return nil
 }
