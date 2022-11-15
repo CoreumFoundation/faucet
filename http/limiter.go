@@ -61,9 +61,12 @@ func (p period) GetProportionally(ip net.IP) uint64 {
 	return uint64(float64(p.counters[string(ip)]) * float64(p.duration-overlappedDuration) / float64(p.duration))
 }
 
-func (p period) Increment(ip net.IP) uint64 {
-	p.counters[string(ip)]++
+func (p period) Get(ip net.IP) uint64 {
 	return p.counters[string(ip)]
+}
+
+func (p period) Increment(ip net.IP) {
+	p.counters[string(ip)]++
 }
 
 // NewWeightedWindowLimiter returns new limiter implementing weighted window algorithm
@@ -90,7 +93,11 @@ func (l *WeightedWindowLimiter) IsRequestAllowed(ip net.IP) bool {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	return l.previous.GetProportionally(ip)+l.current.Increment(ip) <= l.limit
+	allowed := l.previous.GetProportionally(ip)+l.current.Get(ip) <= l.limit
+	if allowed {
+		l.current.Increment(ip)
+	}
+	return allowed
 }
 
 // Run runs cleaning task of the limiter
