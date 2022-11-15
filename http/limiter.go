@@ -1,16 +1,40 @@
 package http
 
-// This implements one of the variants of limiting request rate described at
-// https://blog.cloudflare.com/counting-things-a-lot-of-different-things/
-
 import (
 	"context"
 	"net"
+	stdHTTP "net/http"
 	"sync"
 	"time"
 
 	"github.com/pkg/errors"
+
+	"github.com/CoreumFoundation/faucet/pkg/http"
 )
+
+type rateLimiter interface {
+	IsRequestAllowed(ip net.IP) bool
+}
+
+func limiterMiddleware(limiter rateLimiter) func(http.HandlerFunc) http.HandlerFunc {
+	return func(next http.HandlerFunc) http.HandlerFunc {
+		return func(c http.Context) error {
+			r := c.Request()
+			if r.Method == stdHTTP.MethodGet {
+				return next(c)
+			}
+
+			ip, err := http.IPFromRequest(r)
+			if err != nil {
+				return err
+			}
+			if !ip.IsPrivate() && !ip.IsLoopback() && !ip.IsLinkLocalUnicast() && !limiter.IsRequestAllowed(ip) {
+				return errors.Wrapf(ErrRateLimitExhausted, "ip %q has already used its rate limit", ip.String())
+			}
+			return next(c)
+		}
+	}
+}
 
 func newPeriod(duration time.Duration) period {
 	return period{

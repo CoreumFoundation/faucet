@@ -18,35 +18,11 @@ const (
 	HeaderXRequestID = "X-Request-Id"
 )
 
-type rateLimiter interface {
-	IsRequestAllowed(ip net.IP) bool
-}
-
-func limiterMiddleware(limiter rateLimiter) func(HandlerFunc) HandlerFunc {
-	return func(next HandlerFunc) HandlerFunc {
-		return func(c Context) error {
-			r := c.Request()
-			if r.Method == http.MethodGet {
-				return next(c)
-			}
-
-			ip, err := ipFromRequest(r)
-			if err != nil {
-				return err
-			}
-			if !ip.IsPrivate() && !ip.IsLoopback() && !ip.IsLinkLocalUnicast() && !limiter.IsRequestAllowed(ip) {
-				return errors.Wrapf(ErrRateLimitExhausted, "ip %q has already used its rate limit", ip.String())
-			}
-			return next(c)
-		}
-	}
-}
-
 func prepareRequestContextMiddleware(log *zap.Logger) func(HandlerFunc) HandlerFunc {
 	return func(next HandlerFunc) HandlerFunc {
 		return func(c Context) error {
 			r := c.Request()
-			userIP, err := ipFromRequest(r)
+			userIP, err := IPFromRequest(r)
 			if err != nil {
 				return err
 			}
@@ -71,7 +47,8 @@ func prepareRequestContextMiddleware(log *zap.Logger) func(HandlerFunc) HandlerF
 	}
 }
 
-func ipFromRequest(r *http.Request) (net.IP, error) {
+// IPFromRequest returns IP of the client sending http request
+func IPFromRequest(r *http.Request) (net.IP, error) {
 	remoteAddr := r.RemoteAddr
 
 	xForwardedFor := r.Header[echo.HeaderXForwardedFor]

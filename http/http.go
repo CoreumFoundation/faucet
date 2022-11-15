@@ -4,25 +4,30 @@ import (
 	"context"
 	nethttp "net/http"
 	"runtime"
+	"time"
 
 	"github.com/labstack/echo/v4/middleware"
 	"go.uber.org/zap"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
 	"github.com/CoreumFoundation/faucet/app"
 	"github.com/CoreumFoundation/faucet/pkg/http"
 )
 
 // HTTP type exposes app functionalities via http
 type HTTP struct {
-	app    app.App
-	server http.Server
+	app     app.App
+	server  http.Server
+	limiter *WeightedWindowLimiter
 }
 
 // New returns an instance of the HTTP type
 func New(app app.App, log *zap.Logger) HTTP {
+	limiter := NewWeightedWindowLimiter(2, time.Hour)
 	return HTTP{
-		app:    app,
-		server: http.New(log, writeErrorMiddleware()),
+		app:     app,
+		server:  http.New(log, writeErrorMiddleware(), limiterMiddleware(limiter)),
+		limiter: limiter,
 	}
 }
 
@@ -36,7 +41,14 @@ func (h HTTP) ListenAndServe(ctx context.Context, address string) error {
 	apiv1.GET("/status", h.statusHandle)
 	apiv1.POST("/fund", h.fundHandle)
 	apiv1.POST("/gen-funded", h.genFundedHandle)
-	return h.server.Start(ctx, address, 0)
+
+	return parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
+		spawn("server", parallel.Fail, func(ctx context.Context) error {
+			return h.server.Start(ctx, address, 30*time.Second)
+		})
+		spawn("limiterCleanup", parallel.Fail, h.limiter.Run)
+		return nil
+	})
 }
 
 // StatusResponse is the output to /status request

@@ -12,6 +12,9 @@ import (
 	"github.com/CoreumFoundation/faucet/pkg/http"
 )
 
+// ErrRateLimitExhausted is returned when rate limit is exhausted for an IP address
+var ErrRateLimitExhausted = errors.New("rate limit exhausted")
+
 func writeErrorMiddleware() func(http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(c http.Context) error {
@@ -81,7 +84,7 @@ func mapError(err error) APIError {
 		app.ErrAddressPrefixUnsupported: newSingleAPIError("address.invalid", app.ErrAddressPrefixUnsupported.Error(), stdHttp.StatusNotAcceptable),
 		app.ErrInvalidAddressFormat:     newSingleAPIError("address.invalid", app.ErrInvalidAddressFormat.Error(), stdHttp.StatusNotAcceptable),
 		app.ErrUnableToTransferToken:    newSingleAPIError("server.internal_error", app.ErrUnableToTransferToken.Error(), stdHttp.StatusInternalServerError),
-		http.ErrRateLimitExhausted:      newSingleAPIError("server.rate_limit", http.ErrRateLimitExhausted.Error(), stdHttp.StatusForbidden),
+		ErrRateLimitExhausted:           newSingleAPIError("server.rate_limit", ErrRateLimitExhausted.Error(), stdHttp.StatusTooManyRequests),
 	}
 
 	for e, internalErr := range errList {
