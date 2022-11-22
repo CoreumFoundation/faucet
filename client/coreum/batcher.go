@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
+	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
 )
 
 // NewBatcher returns new instance of Batcher type
@@ -106,19 +107,33 @@ func (b *Batcher) requestFund(address sdk.AccAddress, amount sdk.Coin) (<-chan r
 	return req.responseChan, nil
 }
 
-// Start starts goroutines for batch processing requests
-func (b *Batcher) Start(ctx context.Context) {
-	go func() {
-		<-ctx.Done()
-		b.close()
-	}()
-	go b.createBatches()
-
-	for _, fundingAddress := range b.fundingAddresses {
-		go func(addr sdk.AccAddress) {
-			b.processBatches(ctx, addr)
-		}(fundingAddress)
-	}
+// Run starts goroutines for batch processing requests
+func (b *Batcher) Run(ctx context.Context) error {
+	return parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
+		spawn("closer", parallel.Fail, func(ctx context.Context) error {
+			<-ctx.Done()
+			b.close()
+			return errors.WithStack(ctx.Err())
+		})
+		spawn("createBatches", parallel.Fail, func(ctx context.Context) error {
+			b.createBatches()
+			return errors.WithStack(ctx.Err())
+		})
+		spawn("processBatches", parallel.Fail, func(ctx context.Context) error {
+			_ = parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
+				for _, fundingAddress := range b.fundingAddresses {
+					fundingAddress := fundingAddress
+					spawn(fundingAddress.String(), parallel.Continue, func(ctx context.Context) error {
+						b.processBatches(ctx, fundingAddress)
+						return nil
+					})
+				}
+				return nil
+			})
+			return errors.WithStack(ctx.Err())
+		})
+		return nil
+	})
 }
 
 type batch []request

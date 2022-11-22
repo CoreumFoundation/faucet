@@ -4,6 +4,9 @@ import (
 	"bufio"
 	"context"
 	"os"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -15,12 +18,14 @@ import (
 	"github.com/spf13/pflag"
 	"go.uber.org/zap"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
 	coreumconfig "github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/faucet/app"
 	"github.com/CoreumFoundation/faucet/client/coreum"
 	"github.com/CoreumFoundation/faucet/http"
 	"github.com/CoreumFoundation/faucet/pkg/config"
+	"github.com/CoreumFoundation/faucet/pkg/limiter"
 	"github.com/CoreumFoundation/faucet/pkg/logger"
 	"github.com/CoreumFoundation/faucet/pkg/signal"
 )
@@ -32,6 +37,7 @@ const (
 	flagTransferAmount      = "transfer-amount"
 	flagPrivKeyFile         = "key-path"
 	flagPrivKeyFileMnemonic = "key-path-mnemonic"
+	flagIPRateLimit         = "ip-rate-limit"
 )
 
 func main() {
@@ -105,12 +111,22 @@ func main() {
 		txf,
 	)
 
-	batcher := coreum.NewBatcher(cl, addresses, 10)
-	batcher.Start(ctx)
+	err = parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
+		batcher := coreum.NewBatcher(cl, addresses, 10)
+		application := app.New(batcher, network, transferAmount)
+		ipLimiter := limiter.NewWeightedWindowLimiter(cfg.ipRateLimit.howMany, cfg.ipRateLimit.period)
+		//nolint:contextcheck
+		server := http.New(application, ipLimiter, log)
 
-	application := app.New(batcher, network, transferAmount)
-	server := http.New(application, log)
-	err = server.ListenAndServe(ctx, cfg.address)
+		spawn("batcher", parallel.Fail, batcher.Run)
+		spawn("limiterCleanup", parallel.Fail, ipLimiter.Run)
+		spawn("server", parallel.Fail, func(ctx context.Context) error {
+			return server.ListenAndServe(ctx, cfg.address)
+		})
+
+		return nil
+	})
+
 	if err != nil {
 		log.Fatal("Error on ListenAndServe", zap.Error(err))
 	}
@@ -138,22 +154,58 @@ type cfg struct {
 	fileMnemonic    string
 	address         string
 	transferAmount  int64
+	ipRateLimit     rateLimit
 	help            bool
+}
+
+func parseRateLimit(limit string) (rateLimit, error) {
+	parts := strings.Split(limit, "/")
+	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+		return rateLimit{}, errors.New("invalid format")
+	}
+	howMany, err := strconv.ParseInt(parts[0], 10, 64)
+	if err != nil {
+		return rateLimit{}, errors.Wrap(err, "invalid format")
+	}
+	period, err := time.ParseDuration(parts[1])
+	if err != nil {
+		return rateLimit{}, errors.Wrap(err, "invalid format")
+	}
+
+	return rateLimit{
+		howMany: uint64(howMany),
+		period:  period,
+	}, nil
+}
+
+type rateLimit struct {
+	howMany uint64
+	period  time.Duration
 }
 
 func getConfig(log *zap.Logger, flagSet *pflag.FlagSet) cfg {
 	var conf cfg
+	var ipRateLimit string
+
 	flagSet.StringVar(&conf.chainID, flagChainID, string(coreumconfig.ChainIDDev), "The network chain ID")
 	flagSet.StringVar(&conf.node, flagNode, "tcp://localhost:26657", "<host>:<port> to Tendermint RPC interface for this chain")
 	flagSet.StringVar(&conf.address, flagAddress, ":8090", "<host>:<port> address to start listening for http requests")
 	flagSet.Int64Var(&conf.transferAmount, flagTransferAmount, 1000000, "how much to transfer in each request")
 	flagSet.StringVar(&conf.privateKeysFile, flagPrivKeyFile, "private_keys_unarmored_hex.txt", "path to file containing hex encoded unarmored private keys, each line must contain one private key")
 	flagSet.StringVar(&conf.fileMnemonic, flagPrivKeyFileMnemonic, "mnemonic.txt", "path to file containing mnemonic for private keys, each line containing one mnemonic")
+	flagSet.StringVar(&ipRateLimit, flagIPRateLimit, "2/1h", "limit of requests per IP in the format <num-of-req>/<period>")
 	flagSet.BoolVarP(&conf.help, "help", "h", false, "prints help")
 	_ = flagSet.Parse(os.Args[1:])
-	err := config.WithEnv(flagSet, "")
+
+	var err error
+	conf.ipRateLimit, err = parseRateLimit(ipRateLimit)
 	if err != nil {
-		log.Fatal("error getting config", zap.Error(err))
+		log.Fatal("Error parsing IP rate limit", zap.Error(err))
+	}
+
+	err = config.WithEnv(flagSet, "")
+	if err != nil {
+		log.Fatal("Error getting config", zap.Error(err))
 	}
 	return conf
 }
