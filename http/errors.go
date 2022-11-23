@@ -2,28 +2,25 @@ package http
 
 import (
 	"encoding/json"
-	stdHttp "net/http"
+	nethttp "net/http"
 
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/faucet/app"
 	"github.com/CoreumFoundation/faucet/pkg/http"
 )
 
-func withEchoContext(logger *zap.Logger, c http.Context) *zap.Logger {
-	return logger.With(
-		zap.String("request_id", c.Request().Header.Get(http.HeaderXRequestID)),
-	)
-}
+// ErrRateLimitExhausted is returned when rate limit is exhausted for an IP address
+var ErrRateLimitExhausted = errors.New("rate limit exhausted")
 
-func writeErrorMiddleware(logger *zap.Logger) func(http.HandlerFunc) http.HandlerFunc {
+func writeErrorMiddleware() func(http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(c http.Context) error {
 			err := next(c)
 			if err != nil {
-				logger := withEchoContext(logger, c)
-				logger.Error("Error processing request", zap.Error(err))
+				logger.Get(c.Request().Context()).Error("Error processing request", zap.Error(err))
 				err := mapError(err)
 				return c.JSON(err.Status(), err)
 			}
@@ -84,9 +81,10 @@ func (err singleAPIError) MarshalJSON() ([]byte, error) {
 
 func mapError(err error) APIError {
 	errList := map[error]singleAPIError{
-		app.ErrAddressPrefixUnsupported: newSingleAPIError("address.invalid", app.ErrAddressPrefixUnsupported.Error(), stdHttp.StatusNotAcceptable),
-		app.ErrInvalidAddressFormat:     newSingleAPIError("address.invalid", app.ErrInvalidAddressFormat.Error(), stdHttp.StatusNotAcceptable),
-		app.ErrUnableToTransferToken:    newSingleAPIError("server.internal_error", app.ErrUnableToTransferToken.Error(), stdHttp.StatusInternalServerError),
+		app.ErrAddressPrefixUnsupported: newSingleAPIError("address.invalid", app.ErrAddressPrefixUnsupported.Error(), nethttp.StatusNotAcceptable),
+		app.ErrInvalidAddressFormat:     newSingleAPIError("address.invalid", app.ErrInvalidAddressFormat.Error(), nethttp.StatusNotAcceptable),
+		app.ErrUnableToTransferToken:    newSingleAPIError("server.internal_error", app.ErrUnableToTransferToken.Error(), nethttp.StatusInternalServerError),
+		ErrRateLimitExhausted:           newSingleAPIError("server.rate_limit", ErrRateLimitExhausted.Error(), nethttp.StatusTooManyRequests),
 	}
 
 	for e, internalErr := range errList {
@@ -95,5 +93,5 @@ func mapError(err error) APIError {
 		}
 	}
 
-	return newSingleAPIError("server.internal_error", "internal error", stdHttp.StatusInternalServerError)
+	return newSingleAPIError("server.internal_error", "internal error", nethttp.StatusInternalServerError)
 }

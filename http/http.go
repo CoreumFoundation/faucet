@@ -4,27 +4,27 @@ import (
 	"context"
 	nethttp "net/http"
 	"runtime"
+	"time"
 
 	"github.com/labstack/echo/v4/middleware"
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/faucet/app"
 	"github.com/CoreumFoundation/faucet/pkg/http"
+	"github.com/CoreumFoundation/faucet/pkg/limiter"
 )
 
 // HTTP type exposes app functionalities via http
 type HTTP struct {
 	app    app.App
 	server http.Server
-	logger *zap.Logger
 }
 
 // New returns an instance of the HTTP type
-func New(app app.App, logger *zap.Logger) HTTP {
+func New(app app.App, limiter limiter.PerIPLimiter, log *zap.Logger) HTTP {
 	return HTTP{
 		app:    app,
-		logger: logger,
-		server: http.New(logger),
+		server: http.New(log, writeErrorMiddleware(), limiterMiddleware(limiter)),
 	}
 }
 
@@ -32,14 +32,14 @@ func New(app app.App, logger *zap.Logger) HTTP {
 func (h HTTP) ListenAndServe(ctx context.Context, address string) error {
 	apiv1 := h.server.Group(
 		"/api/faucet/v1",
-		writeErrorMiddleware(h.logger),
 		middleware.BodyLimit("4MB"),
 	)
 
 	apiv1.GET("/status", h.statusHandle)
 	apiv1.POST("/fund", h.fundHandle)
 	apiv1.POST("/gen-funded", h.genFundedHandle)
-	return h.server.Start(ctx, address, 0)
+
+	return h.server.Start(ctx, address, 30*time.Second)
 }
 
 // StatusResponse is the output to /status request
@@ -79,4 +79,20 @@ func (h HTTP) fundHandle(ctx http.Context) error {
 	}
 
 	return ctx.JSON(nethttp.StatusOK, FundResponse{TxHash: txHash})
+}
+
+// GenFundedResponse is the output to GiveFunds request
+type GenFundedResponse struct {
+	TxHash   string `json:"txHash"`
+	Mnemonic string `json:"mnemonic"`
+	Address  string `json:"address"`
+}
+
+func (h HTTP) genFundedHandle(ctx http.Context) error {
+	result, err := h.app.GenMnemonicAndFund(ctx.Request().Context())
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(nethttp.StatusOK, GenFundedResponse(result))
 }

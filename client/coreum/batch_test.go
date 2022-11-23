@@ -12,6 +12,7 @@ import (
 	"go.uber.org/zap/zaptest"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
+	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
 )
 
 type mockCoreumClient struct {
@@ -55,7 +56,13 @@ func TestBatchSend(t *testing.T) {
 
 	mock := &mockCoreumClient{}
 	batcher := NewBatcher(mock, fundingAddresses, 10)
-	batcher.Start(ctx)
+
+	group := parallel.NewGroup(ctx)
+	group.Spawn("batcher", parallel.Fail, batcher.Run)
+	t.Cleanup(func() {
+		group.Exit(nil)
+		_ = group.Wait()
+	})
 
 	wg := sync.WaitGroup{}
 	requestCount := 100
