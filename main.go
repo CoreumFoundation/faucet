@@ -20,6 +20,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
 	coreumconfig "github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/faucet/app"
 	"github.com/CoreumFoundation/faucet/client/coreum"
@@ -61,7 +62,7 @@ func main() {
 		)
 	}
 
-	if network.ChainID() == coreumconfig.ChainIDMain {
+	if network.ChainID() == constant.ChainIDMain {
 		log.Fatal("running a faucet against mainnet is not allowed")
 	}
 
@@ -69,7 +70,7 @@ func main() {
 
 	transferAmount := sdk.Coin{
 		Amount: sdk.NewInt(cfg.transferAmount),
-		Denom:  network.BaseDenom(),
+		Denom:  network.Denom(),
 	}
 
 	kr, addresses, err := newKeyringFromFile(cfg.fileMnemonic)
@@ -187,7 +188,7 @@ func getConfig(log *zap.Logger, flagSet *pflag.FlagSet) cfg {
 	var conf cfg
 	var ipRateLimit string
 
-	flagSet.StringVar(&conf.chainID, flagChainID, string(coreumconfig.ChainIDDev), "The network chain ID")
+	flagSet.StringVar(&conf.chainID, flagChainID, string(constant.ChainIDDev), "The network chain ID")
 	flagSet.StringVar(&conf.node, flagNode, "tcp://localhost:26657", "<host>:<port> to Tendermint RPC interface for this chain")
 	flagSet.StringVar(&conf.address, flagAddress, ":8090", "<host>:<port> address to start listening for http requests")
 	flagSet.Int64Var(&conf.transferAmount, flagTransferAmount, 1000000, "how much to transfer in each request")
