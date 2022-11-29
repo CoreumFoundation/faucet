@@ -72,7 +72,7 @@ func (err singleAPIError) MarshalJSON() ([]byte, error) {
 	}{
 		Type: "errors",
 		Content: []errEntity{
-			{Message: err.message},
+			{Message: err.message, Kind: err.kind},
 		},
 	}
 
@@ -81,8 +81,8 @@ func (err singleAPIError) MarshalJSON() ([]byte, error) {
 
 func mapError(err error) APIError {
 	errList := map[error]singleAPIError{
-		app.ErrAddressPrefixUnsupported: newSingleAPIError("address.invalid", app.ErrAddressPrefixUnsupported.Error(), nethttp.StatusNotAcceptable),
-		app.ErrInvalidAddressFormat:     newSingleAPIError("address.invalid", app.ErrInvalidAddressFormat.Error(), nethttp.StatusNotAcceptable),
+		app.ErrAddressPrefixUnsupported: newSingleAPIError("address.invalid", app.ErrAddressPrefixUnsupported.Error(), nethttp.StatusUnprocessableEntity),
+		app.ErrInvalidAddressFormat:     newSingleAPIError("address.invalid", app.ErrInvalidAddressFormat.Error(), nethttp.StatusUnprocessableEntity),
 		app.ErrUnableToTransferToken:    newSingleAPIError("server.internal_error", app.ErrUnableToTransferToken.Error(), nethttp.StatusInternalServerError),
 		ErrRateLimitExhausted:           newSingleAPIError("server.rate_limit", ErrRateLimitExhausted.Error(), nethttp.StatusTooManyRequests),
 	}

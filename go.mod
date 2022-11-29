@@ -5,13 +5,13 @@ go 1.19
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
 require (
-	github.com/CoreumFoundation/coreum v0.0.0-20221020062628-7641bb8ae55d
+	github.com/CoreumFoundation/coreum v0.0.1-dev
 	github.com/CoreumFoundation/coreum-tools v0.2.1
 	github.com/cosmos/cosmos-sdk v0.45.9
 	github.com/google/uuid v1.3.0
 	github.com/labstack/echo/v4 v4.8.0
 	github.com/pkg/errors v0.9.1
-	github.com/samber/lo v1.28.0
+	github.com/samber/lo v1.35.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.0
 	github.com/tendermint/tendermint v0.34.21
