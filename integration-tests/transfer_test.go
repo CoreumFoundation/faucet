@@ -29,6 +29,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	coreumconfig "github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	coreumtx "github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/faucet/http"
 	"github.com/CoreumFoundation/faucet/pkg/config"
@@ -51,7 +52,7 @@ func TestMain(m *testing.M) {
 	flag.Parse()
 	rpcClient, err := client.NewClientFromNode(cfg.coredAddress)
 	must.OK(err)
-	cfg.network, _ = coreumconfig.NetworkByChainID(coreumconfig.ChainIDDev)
+	cfg.network, _ = coreumconfig.NetworkByChainID(constant.ChainIDDev)
 	cfg.network.SetSDKConfig()
 	cfg.clientCtx = coreumtx.NewClientContext(config.NewModuleManager()).
 		WithChainID(string(cfg.network.ChainID())).
@@ -83,7 +84,7 @@ func TestTransferRequest(t *testing.T) {
 	require.NoError(t, err)
 
 	// make assertions
-	assert.EqualValues(t, cfg.transferAmount, resp.Balances.AmountOf(cfg.network.BaseDenom()).String())
+	assert.EqualValues(t, cfg.transferAmount, resp.Balances.AmountOf(cfg.network.Denom()).String())
 }
 
 // waitForTxInclusionAndSync waits for one block, so all nodes are synced
@@ -149,7 +150,7 @@ func TestTransferRequestWithGenPrivkey(t *testing.T) {
 	require.NoError(t, err)
 
 	// make assertions
-	assert.EqualValues(t, cfg.transferAmount, resp.Balances.AmountOf(cfg.network.BaseDenom()).String())
+	assert.EqualValues(t, cfg.transferAmount, resp.Balances.AmountOf(cfg.network.Denom()).String())
 }
 
 func TestTransferRequest_WrongAddress(t *testing.T) {
