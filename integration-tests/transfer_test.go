@@ -1,5 +1,4 @@
-//go:build integration
-// +build integration
+//go:build integrationtests
 
 package integrationtests
 
@@ -45,10 +44,13 @@ type testConfig struct {
 
 var cfg testConfig
 
-func TestMain(m *testing.M) {
+func init() {
 	flag.StringVar(&cfg.coredAddress, "cored-address", "tcp://localhost:26657", "Address of cored node started by znet")
 	flag.StringVar(&cfg.faucetAddress, "faucet-address", "http://localhost:8090", "Address of the faucet")
 	flag.StringVar(&cfg.transferAmount, "transfer-amount", "1000000", "Amount transferred by faucet in each request")
+	// accept testing flags
+	testing.Init()
+	// parse additional flags
 	flag.Parse()
 	rpcClient, err := client.NewClientFromNode(cfg.coredAddress)
 	must.OK(err)
@@ -58,11 +60,11 @@ func TestMain(m *testing.M) {
 		WithChainID(string(cfg.network.ChainID())).
 		WithClient(rpcClient).
 		WithBroadcastMode(flags.BroadcastBlock)
-
-	m.Run()
 }
 
 func TestTransferRequest(t *testing.T) {
+	t.Parallel()
+
 	log := zaptest.NewLogger(t)
 	ctx := logger.WithLogger(context.Background(), log)
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
@@ -130,6 +132,8 @@ func waitForTxInclusionAndSync(ctx context.Context, clientCtx coreumtx.ClientCon
 }
 
 func TestTransferRequestWithGenPrivkey(t *testing.T) {
+	t.Parallel()
+
 	log := zaptest.NewLogger(t)
 	ctx := logger.WithLogger(context.Background(), log)
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
@@ -154,6 +158,8 @@ func TestTransferRequestWithGenPrivkey(t *testing.T) {
 }
 
 func TestTransferRequest_WrongAddress(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	address := "core1hrlnys435ph2gehthddlg2g2s246my30q0gfs2"
 
