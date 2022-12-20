@@ -48,21 +48,20 @@ func prepareRequestContextMiddleware(log *zap.Logger) func(HandlerFunc) HandlerF
 }
 
 // IPFromRequest returns IP of the client sending http request
-func IPFromRequest(r *http.Request) (net.IP, error) {
-	remoteAddr := r.RemoteAddr
+func IPFromRequest(r *http.Request) (i net.IP, err error) {
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
 
 	xForwardedFor := r.Header[echo.HeaderXForwardedFor]
 	if len(xForwardedFor) > 0 {
 		addrs := strings.Split(xForwardedFor[len(xForwardedFor)-1], ",")
 		if addr := strings.TrimSpace(addrs[len(addrs)-1]); addr != "" {
-			remoteAddr = addr
+			host = addr
 		}
 	}
 
-	host, _, err := net.SplitHostPort(remoteAddr)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
 	ip := net.ParseIP(host)
 	if ip == nil {
 		return nil, errors.Errorf("failed to parse %q as an IP address", host)
