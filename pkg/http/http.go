@@ -76,7 +76,7 @@ func (s Server) Start(ctx context.Context, listenAddress string, forceShutdownTi
 func (s Server) listen(ctx context.Context, listener net.Listener) error {
 	logger.Get(ctx).Info("Started listening for http connections", zap.Stringer("address", listener.Addr()))
 	if err := http.Serve(listener, s.Echo); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		return errors.Wrap(err, "Error listening for connections")
+		return errors.Wrap(err, "error listening for connections")
 	}
 	return errors.WithStack(ctx.Err())
 }
@@ -90,7 +90,7 @@ func (s Server) shutdown(ctx context.Context, forceShutdownTimeout time.Duration
 
 	log.Info("Starting graceful shutdown")
 	if err := s.Shutdown(ctx); err != nil {
-		return errors.Wrap(err, "Error shutting down server")
+		return errors.Wrap(err, "error shutting down server")
 	}
 
 	log.Info("Server shutdown successfully")
