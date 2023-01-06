@@ -2,7 +2,7 @@ name: release
 on:
   push:
     tags:
-      - '*'
+      - "v[0-9]+.[0-9]+.[0-9]+*"
 
 jobs:
   ci:
@@ -19,15 +19,15 @@ jobs:
           fi
       - name: Release
         if: steps.check-tag.outputs.release == 'true'
-        uses: ncipollo/release-action@v1
+        uses: softprops/action-gh-release@v1
         with:
-          generateReleaseNotes: true
+          generate_release_notes: true
       - name: Release-candidate
         if: steps.check-tag.outputs.release-candidate == 'true'
-        uses: ncipollo/release-action@v1
+        uses: softprops/action-gh-release@v1
         with:
           prerelease: true
-          generateReleaseNotes: true
+          generate_release_notes: true
 
 
 
