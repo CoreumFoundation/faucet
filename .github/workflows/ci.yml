@@ -5,14 +5,15 @@ on:
   pull_request:
     branches: [ master ]
   workflow_dispatch:
+    inputs:
 
 jobs:
   ci:
-    strategy:
-      fail-fast: false
-      matrix:
-        ci_step: ["images" ]
-        include:
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        ci_step: ["images" ]
+#        include:
 #          - ci_step: "lint"
 #            command: "crust lint/faucet --log-format=yaml"
 #            go-cache: true
@@ -33,11 +34,11 @@ jobs:
 #            go-cache: true
 #            linter-cache: false
 #            docker-cache: true
-          - ci_step: "images"
-            command: "crust images/faucet --log-format=yaml"
-            go-cache: true
-            linter-cache: true
-            docker-cache: true
+#          - ci_step: "images"
+#            command: "crust images/faucet --log-format=yaml"
+#            go-cache: true
+#            linter-cache: true
+#            docker-cache: true
 #          - ci_step: "push"
 #            command: "docker push --all-tags"
 #            go-cache: true
@@ -86,10 +87,10 @@ jobs:
 #        with:
 #          username: ${{ secrets.DOCKER_USERNAME }}
 #          password: ${{ secrets.DOCKER_PASSWORD }}
-      - name: Run ${{ matrix.ci_step }}
-        run: ${{ matrix.command }}
+#      - name: Run ${{ matrix.ci_step }}
+#        run: ${{ matrix.command }}
       - name: Release
         uses: ncipollo/release-action@v1
-        if: true
+        if: ${{  github.ref_name }} =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$
         with:
           bodyFile: "body.md"
