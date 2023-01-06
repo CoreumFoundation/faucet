@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ci_step: [ "lint", "test", "build", "integration tests" ]
+        ci_step: [ "lint", "test", "build", "integration tests", "images" ]
         include:
           - ci_step: "lint"
             command: "crust lint/faucet --log-format=yaml"
@@ -33,6 +33,12 @@ jobs:
             go-cache: true
             linter-cache: false
             docker-cache: true
+          - ci_step: "images"
+            command: "crust images/faucet --log-format=yaml" # TODO don't build znet for CI
+            go-cache: true
+            linter-cache: true
+            docker-cache: true
+
 
     runs-on: ubuntu-22.04
     steps:
@@ -72,3 +78,5 @@ jobs:
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Run ${{ matrix.ci_step }}
         run: ${{ matrix.command }}
+
+
