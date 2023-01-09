@@ -63,8 +63,6 @@ func init() {
 }
 
 func TestTransferRequest(t *testing.T) {
-	t.Parallel()
-
 	log := zaptest.NewLogger(t)
 	ctx := logger.WithLogger(context.Background(), log)
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
@@ -132,8 +130,6 @@ func waitForTxInclusionAndSync(ctx context.Context, clientCtx coreumtx.ClientCon
 }
 
 func TestTransferRequestWithGenPrivkey(t *testing.T) {
-	t.Parallel()
-
 	log := zaptest.NewLogger(t)
 	ctx := logger.WithLogger(context.Background(), log)
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
@@ -158,8 +154,6 @@ func TestTransferRequestWithGenPrivkey(t *testing.T) {
 }
 
 func TestTransferRequest_WrongAddress(t *testing.T) {
-	t.Parallel()
-
 	ctx := context.Background()
 	address := "core1hrlnys435ph2gehthddlg2g2s246my30q0gfs2"
 
