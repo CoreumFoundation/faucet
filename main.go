@@ -32,13 +32,12 @@ import (
 )
 
 const (
-	flagChainID             = "chain-id"
-	flagNode                = "node"
-	flagAddress             = "address"
-	flagTransferAmount      = "transfer-amount"
-	flagPrivKeyFile         = "key-path"
-	flagPrivKeyFileMnemonic = "key-path-mnemonic"
-	flagIPRateLimit         = "ip-rate-limit"
+	flagChainID          = "chain-id"
+	flagNode             = "node"
+	flagAddress          = "address"
+	flagTransferAmount   = "transfer-amount"
+	flagMnemonicFilePath = "key-path-mnemonic"
+	flagIPRateLimit      = "ip-rate-limit"
 )
 
 func main() {
@@ -50,10 +49,10 @@ func main() {
 	log.Info("Starting faucet",
 		zap.String("address", cfg.address),
 		zap.String("chainID", cfg.chainID),
-		zap.String("privateKeysFile", cfg.privateKeysFile),
+		zap.String("mnemonicFilePath", cfg.mnemonicFilePath),
 		zap.String("node", cfg.node))
 
-	network, err := coreumconfig.NetworkByChainID(coreumconfig.ChainID(cfg.chainID))
+	network, err := coreumconfig.NetworkByChainID(constant.ChainID(cfg.chainID))
 	if err != nil {
 		log.Fatal(
 			"Unable to get network config for chain-id",
@@ -73,7 +72,7 @@ func main() {
 		Denom:  network.Denom(),
 	}
 
-	kr, addresses, err := newKeyringFromFile(cfg.fileMnemonic)
+	kr, addresses, err := newKeyringFromFile(cfg.mnemonicFilePath)
 	if err != nil {
 		log.Fatal(
 			"Unable to create keyring",
@@ -149,14 +148,13 @@ func setup() (context.Context, *zap.Logger, cfg) {
 }
 
 type cfg struct {
-	chainID         string
-	node            string
-	privateKeysFile string
-	fileMnemonic    string
-	address         string
-	transferAmount  int64
-	ipRateLimit     rateLimit
-	help            bool
+	chainID          string
+	node             string
+	mnemonicFilePath string
+	address          string
+	transferAmount   int64
+	ipRateLimit      rateLimit
+	help             bool
 }
 
 func parseRateLimit(limit string) (rateLimit, error) {
@@ -192,8 +190,7 @@ func getConfig(log *zap.Logger, flagSet *pflag.FlagSet) cfg {
 	flagSet.StringVar(&conf.node, flagNode, "tcp://localhost:26657", "<host>:<port> to Tendermint RPC interface for this chain")
 	flagSet.StringVar(&conf.address, flagAddress, ":8090", "<host>:<port> address to start listening for http requests")
 	flagSet.Int64Var(&conf.transferAmount, flagTransferAmount, 1000000, "how much to transfer in each request")
-	flagSet.StringVar(&conf.privateKeysFile, flagPrivKeyFile, "private_keys_unarmored_hex.txt", "path to file containing hex encoded unarmored private keys, each line must contain one private key")
-	flagSet.StringVar(&conf.fileMnemonic, flagPrivKeyFileMnemonic, "mnemonic.txt", "path to file containing mnemonic for private keys, each line containing one mnemonic")
+	flagSet.StringVar(&conf.mnemonicFilePath, flagMnemonicFilePath, "mnemonic.txt", "path to file containing mnemonic for private keys, each line containing one mnemonic")
 	flagSet.StringVar(&ipRateLimit, flagIPRateLimit, "2/1h", "limit of requests per IP in the format <num-of-req>/<period>")
 	flagSet.BoolVarP(&conf.help, "help", "h", false, "prints help")
 	_ = flagSet.Parse(os.Args[1:])
