@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/pflag"
 )
 
-// NewModuleManager returns new module manager
+// NewModuleManager returns new module manager.
 func NewModuleManager() module.BasicManager {
 	return module.NewBasicManager(
 		bank.AppModuleBasic{},

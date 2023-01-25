@@ -12,7 +12,7 @@ import (
 	"github.com/CoreumFoundation/faucet/pkg/logger"
 )
 
-// New returns an instance of the Client interface
+// New returns an instance of the Client interface.
 func New(network config.Network, clientCtx tx.ClientContext, txf tx.Factory) Client {
 	return Client{
 		network:   network,
@@ -21,7 +21,7 @@ func New(network config.Network, clientCtx tx.ClientContext, txf tx.Factory) Cli
 	}
 }
 
-// Client is used to communicate with coreum blockchain
+// Client is used to communicate with coreum blockchain.
 type Client struct {
 	clientCtx tx.ClientContext
 	network   config.Network
@@ -33,7 +33,7 @@ type transferRequest struct {
 	destAddress sdk.AccAddress
 }
 
-// TransferToken transfers amount to a list of destination addresses in single tx
+// TransferToken transfers amount to a list of destination addresses in single tx.
 func (c Client) TransferToken(
 	ctx context.Context,
 	fromAddress sdk.AccAddress,

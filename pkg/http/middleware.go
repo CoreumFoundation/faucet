@@ -13,7 +13,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 )
 
-// Predefined Headers
+// Predefined headers.
 const (
 	HeaderXRequestID = "X-Request-Id"
 )
@@ -47,7 +47,7 @@ func prepareRequestContextMiddleware(log *zap.Logger) func(HandlerFunc) HandlerF
 	}
 }
 
-// IPFromRequest returns IP of the client sending http request
+// IPFromRequest returns IP of the client sending http request.
 func IPFromRequest(r *http.Request) (i net.IP, err error) {
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {

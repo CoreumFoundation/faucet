@@ -14,13 +14,13 @@ import (
 	"github.com/CoreumFoundation/faucet/pkg/limiter"
 )
 
-// HTTP type exposes app functionalities via http
+// HTTP type exposes app functionalities via http.
 type HTTP struct {
 	app    app.App
 	server http.Server
 }
 
-// New returns an instance of the HTTP type
+// New returns an instance of the HTTP type.
 func New(app app.App, limiter limiter.PerIPLimiter, log *zap.Logger) HTTP {
 	return HTTP{
 		app:    app,
@@ -28,7 +28,7 @@ func New(app app.App, limiter limiter.PerIPLimiter, log *zap.Logger) HTTP {
 	}
 }
 
-// ListenAndServe starts listening for http requests
+// ListenAndServe starts listening for http requests.
 func (h HTTP) ListenAndServe(ctx context.Context, address string) error {
 	apiv1 := h.server.Group(
 		"/api/faucet/v1",
@@ -42,7 +42,7 @@ func (h HTTP) ListenAndServe(ctx context.Context, address string) error {
 	return h.server.Start(ctx, address, 30*time.Second)
 }
 
-// StatusResponse is the output to /status request
+// StatusResponse is the output to /status request.
 type StatusResponse struct {
 	Version string `json:"version"`
 	Status  string `json:"status"`
@@ -57,12 +57,12 @@ func (h HTTP) statusHandle(ctx http.Context) error {
 	})
 }
 
-// FundRequest is the input to GiveFunds request
+// FundRequest is the input to GiveFunds request.
 type FundRequest struct {
 	Address string `json:"address"`
 }
 
-// FundResponse is the output to GiveFunds request
+// FundResponse is the output to GiveFunds request.
 type FundResponse struct {
 	TxHash string `json:"txHash"`
 }
@@ -81,7 +81,7 @@ func (h HTTP) fundHandle(ctx http.Context) error {
 	return ctx.JSON(nethttp.StatusOK, FundResponse{TxHash: txHash})
 }
 
-// GenFundedResponse is the output to GiveFunds request
+// GenFundedResponse is the output to GiveFunds request.
 type GenFundedResponse struct {
 	TxHash   string `json:"txHash"`
 	Mnemonic string `json:"mnemonic"`

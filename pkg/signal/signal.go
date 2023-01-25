@@ -11,7 +11,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 )
 
-// TerminateSignal returns a context which will be cancelled if SIGINT or SIGTERM is received by the application
+// TerminateSignal returns a context which will be cancelled if SIGINT or SIGTERM is received by the application.
 func TerminateSignal(ctx context.Context) context.Context {
 	log := logger.Get(ctx)
 	sigChan := make(chan os.Signal, 1)

@@ -9,14 +9,14 @@ import (
 	"github.com/pkg/errors"
 )
 
-// GenMnemonicAndFundResult is the response returned from GenMnemonicAndFund
+// GenMnemonicAndFundResult is the response returned from GenMnemonicAndFund.
 type GenMnemonicAndFundResult struct {
 	TxHash   string
 	Mnemonic string
 	Address  string
 }
 
-// GenMnemonicAndFund generates a private key and funds it
+// GenMnemonicAndFund generates a private key and funds it.
 func (a App) GenMnemonicAndFund(ctx context.Context) (GenMnemonicAndFundResult, error) {
 	kr := keyring.NewInMemory()
 	info, mnemonic, err := kr.NewMnemonic("", keyring.English, sdk.GetConfig().GetFullBIP44Path(), "", hd.Secp256k1)
