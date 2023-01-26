@@ -12,7 +12,7 @@ import (
 	"github.com/CoreumFoundation/faucet/pkg/http"
 )
 
-// ErrRateLimitExhausted is returned when rate limit is exhausted for an IP address
+// ErrRateLimitExhausted is returned when rate limit is exhausted for an IP address.
 var ErrRateLimitExhausted = errors.New("rate limit exhausted")
 
 func writeErrorMiddleware() func(http.HandlerFunc) http.HandlerFunc {
@@ -29,7 +29,7 @@ func writeErrorMiddleware() func(http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// APIError provides a wrapper around errors which makes exposing errors to outside world simpler
+// APIError provides a wrapper around errors which makes exposing errors to outside world simpler.
 type APIError interface {
 	// Satisfy error interface.
 	error

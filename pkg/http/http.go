@@ -15,19 +15,19 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
 )
 
-// re-export types from echo library for convenience, so the users will not need to import echo library
+// Re-export types from echo library for convenience, so the users will not need to import echo library.
 type (
-	// HandlerFunc aliases and re-exports echo types so the users of this package don't need to reach to echo package
+	// HandlerFunc aliases and re-exports echo types so the users of this package don't need to reach to echo package.
 	HandlerFunc = echo.HandlerFunc
-	// MiddlewareFunc aliases and re-exports echo types so the users of this package don't need to reach to echo package
+	// MiddlewareFunc aliases and re-exports echo types so the users of this package don't need to reach to echo package.
 	MiddlewareFunc = echo.MiddlewareFunc
-	// Route aliases and re-exports echo types so the users of this package don't need to reach to echo package
+	// Route aliases and re-exports echo types so the users of this package don't need to reach to echo package.
 	Route = echo.Route
-	// Context aliases and re-exports echo types so the users of this package don't need to reach to echo package
+	// Context aliases and re-exports echo types so the users of this package don't need to reach to echo package.
 	Context = echo.Context
 )
 
-// New returns a server instance
+// New returns a server instance.
 func New(log *zap.Logger, middlewares ...MiddlewareFunc) Server {
 	e := echo.New()
 	e.Logger.SetLevel(99)
@@ -48,14 +48,14 @@ func New(log *zap.Logger, middlewares ...MiddlewareFunc) Server {
 	return Server{Echo: e}
 }
 
-// Server exposes functionalities needed to run an http server
+// Server exposes functionalities needed to run an http server.
 type Server struct {
 	*echo.Echo
 }
 
 // Start begins listening and serving http requests with graceful shut down. graceful shutdown signal should be
 // passed to the function as input and should come from the signal package.
-// NOTE: graceful shutdown does not handle websocket and other hijacked connections (because it relies on http.server#Shutdown)
+// NOTE: graceful shutdown does not handle websocket and other hijacked connections (because it relies on http.server#Shutdown).
 func (s Server) Start(ctx context.Context, listenAddress string, forceShutdownTimeout time.Duration) error {
 	listener, err := net.Listen("tcp", listenAddress)
 	if err != nil {

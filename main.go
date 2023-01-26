@@ -104,7 +104,7 @@ func main() {
 		WithTxConfig(clientCtx.TxConfig()).
 		WithKeybase(kr).
 		WithChainID(string(network.ChainID())).
-		WithSignMode(signing.SignMode_SIGN_MODE_DIRECT) //nolint:nosnakecase
+		WithSignMode(signing.SignMode_SIGN_MODE_DIRECT)
 	cl := coreum.New(
 		network,
 		clientCtx,

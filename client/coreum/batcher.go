@@ -12,7 +12,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
 )
 
-// NewBatcher returns new instance of Batcher type
+// NewBatcher returns new instance of Batcher type.
 func NewBatcher(
 	client coreumClient,
 	fundingAddresses []sdk.AccAddress,
@@ -31,7 +31,7 @@ func NewBatcher(
 	return b
 }
 
-// coreumClient is the interface that provides Coreum coreumClient functionality
+// coreumClient is the interface that provides Coreum coreumClient functionality.
 type coreumClient interface {
 	TransferToken(
 		ctx context.Context,
@@ -40,7 +40,7 @@ type coreumClient interface {
 	) (string, error)
 }
 
-// Batcher exposes functionality to batch many transfer requests
+// Batcher exposes functionality to batch many transfer requests.
 type Batcher struct {
 	requestBuffer    chan request
 	client           coreumClient
@@ -62,7 +62,7 @@ type request struct {
 	req          transferRequest
 }
 
-// SendToken receives a single transfer token request, batch sends them and returns the result
+// SendToken receives a single transfer token request, batch sends them and returns the result.
 func (b *Batcher) SendToken(ctx context.Context, destAddress sdk.AccAddress, amount sdk.Coin) (string, error) {
 	resChan, err := b.requestFund(destAddress, amount)
 	if err != nil {
@@ -107,7 +107,7 @@ func (b *Batcher) requestFund(address sdk.AccAddress, amount sdk.Coin) (<-chan r
 	return req.responseChan, nil
 }
 
-// Run starts goroutines for batch processing requests
+// Run starts goroutines for batch processing requests.
 func (b *Batcher) Run(ctx context.Context) error {
 	return parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
 		spawn("closer", parallel.Fail, func(ctx context.Context) error {

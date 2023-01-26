@@ -42,7 +42,7 @@ func (p period) Increment(ip net.IP) {
 	p.counters[string(ip)]++
 }
 
-// NewWeightedWindowLimiter returns new limiter implementing weighted window algorithm
+// NewWeightedWindowLimiter returns new limiter implementing weighted window algorithm.
 func NewWeightedWindowLimiter(limit uint64, duration time.Duration) *WeightedWindowLimiter {
 	return &WeightedWindowLimiter{
 		limit:    limit,
@@ -51,7 +51,7 @@ func NewWeightedWindowLimiter(limit uint64, duration time.Duration) *WeightedWin
 	}
 }
 
-// WeightedWindowLimiter imlements rate limiting using weighted window algorithm
+// WeightedWindowLimiter imlements rate limiting using weighted window algorithm.
 type WeightedWindowLimiter struct {
 	limit    uint64
 	duration time.Duration
@@ -61,7 +61,7 @@ type WeightedWindowLimiter struct {
 	current  period
 }
 
-// IsRequestAllowed tells if request should be handled or rejected due to exhausted rate limit
+// IsRequestAllowed tells if request should be handled or rejected due to exhausted rate limit.
 func (l *WeightedWindowLimiter) IsRequestAllowed(ip net.IP) bool {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -73,7 +73,7 @@ func (l *WeightedWindowLimiter) IsRequestAllowed(ip net.IP) bool {
 	return allowed
 }
 
-// Run runs cleaning task of the limiter
+// Run runs cleaning task of the limiter.
 func (l *WeightedWindowLimiter) Run(ctx context.Context) error {
 	for {
 		select {

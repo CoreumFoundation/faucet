@@ -2,7 +2,7 @@ package limiter
 
 import "net"
 
-// PerIPLimiter defines an interface of IP rate limiter
+// PerIPLimiter defines an interface of IP rate limiter.
 type PerIPLimiter interface {
 	IsRequestAllowed(ip net.IP) bool
 }

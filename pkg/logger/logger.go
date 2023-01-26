@@ -11,7 +11,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 )
 
-// re-export logger vars for convenience
+// Re-export logger vars for convenience.
 var (
 	ServiceDefaultConfig = logger.ServiceDefaultConfig
 	ToolDefaultConfig    = logger.ToolDefaultConfig
@@ -21,7 +21,7 @@ var (
 )
 
 type (
-	// Config re-export logger types for convenience
+	// Config re-export logger types for convenience.
 	Config = logger.Config
 )
 
@@ -35,7 +35,7 @@ func newFlagRegister(fromFlagSet *pflag.FlagSet, exceptions ...string) func(*pfl
 	}
 }
 
-// ConfigureWithCLI configures logger based on CLI flags
+// ConfigureWithCLI configures logger based on CLI flags.
 func ConfigureWithCLI(defaultConfig logger.Config) (logger.Config, func(*pflag.FlagSet)) {
 	flags := pflag.NewFlagSet("logger", pflag.ContinueOnError)
 	flags.ParseErrorsWhitelist.UnknownFlags = true

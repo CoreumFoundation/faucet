@@ -9,14 +9,14 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/config"
 )
 
-// App implements core functionality
+// App implements core functionality.
 type App struct {
 	batcher        Batcher
 	transferAmount sdk.Coin
 	network        config.Network
 }
 
-// New returns a new instance of the App
+// New returns a new instance of the App.
 func New(
 	batcher Batcher,
 	network config.Network,
@@ -29,12 +29,12 @@ func New(
 	}
 }
 
-// Batcher indicates the required functionality to connect to coreum blockchain
+// Batcher indicates the required functionality to connect to coreum blockchain.
 type Batcher interface {
 	SendToken(ctx context.Context, destAddress sdk.AccAddress, amount sdk.Coin) (string, error)
 }
 
-// GiveFunds gives funds to people asking for it
+// GiveFunds gives funds to people asking for it.
 func (a App) GiveFunds(ctx context.Context, address string) (string, error) {
 	prefix, sdkAddr, err := parseAddress(address)
 	if err != nil {
