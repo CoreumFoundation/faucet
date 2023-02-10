@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -138,18 +137,6 @@ func addClient(cfg cfg, log *zap.Logger, clientCtx client.Context) client.Contex
 			zap.Error(err),
 			zap.String("url", cfg.node),
 		)
-	}
-
-	// TODO(dhil) remove switch once crust is updated
-	if nodeURL.Scheme == "tcp" {
-		rpcClient, err := cosmosclient.NewClientFromNode(cfg.node)
-		if err != nil {
-			log.Fatal(
-				"Unable to create cosmos rpc client",
-				zap.Error(err),
-			)
-		}
-		return clientCtx.WithRPCClient(rpcClient)
 	}
 
 	// tls grpc
