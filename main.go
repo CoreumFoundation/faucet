@@ -164,7 +164,7 @@ func addClient(cfg cfg, log *zap.Logger, clientCtx client.Context) client.Contex
 
 	// no-tls grpc
 	host := nodeURL.Host
-	// this situation is possible the protocol wasn't provided, in such senanario we use the
+	// it is possible that protocol wasn't provided, in such scenario we use the node as a host to dial
 	if host == "" {
 		host = cfg.node
 	}
