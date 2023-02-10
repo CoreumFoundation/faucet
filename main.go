@@ -3,12 +3,14 @@ package main
 import (
 	"bufio"
 	"context"
+	"crypto/tls"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/client"
+	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -17,11 +19,14 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
+	"github.com/CoreumFoundation/coreum/pkg/client"
 	coreumconfig "github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
-	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/faucet/app"
 	"github.com/CoreumFoundation/faucet/client/coreum"
 	"github.com/CoreumFoundation/faucet/http"
@@ -87,20 +92,13 @@ func main() {
 	}
 	log.Info("funding account addresses", zap.Strings("addresses", addrList))
 
-	rpcClient, err := client.NewClientFromNode(cfg.node)
-	if err != nil {
-		log.Fatal(
-			"Unable to create cosmos rpc client",
-			zap.Error(err),
-		)
-	}
-
-	clientCtx := tx.NewClientContext(config.NewModuleManager()).
+	clientCtx := client.NewContext(client.DefaultContextConfig(), config.NewModuleManager()).
 		WithChainID(string(network.ChainID())).
-		WithClient(rpcClient).
 		WithBroadcastMode(flags.BroadcastBlock)
 
-	txf := tx.Factory{}.
+	clientCtx = addClient(cfg, log, clientCtx)
+
+	txf := client.Factory{}.
 		WithTxConfig(clientCtx.TxConfig()).
 		WithKeybase(kr).
 		WithChainID(string(network.ChainID())).
@@ -130,6 +128,55 @@ func main() {
 	if err != nil {
 		log.Fatal("Error on ListenAndServe", zap.Error(err))
 	}
+}
+
+func addClient(cfg cfg, log *zap.Logger, clientCtx client.Context) client.Context {
+	nodeURL, err := url.Parse(cfg.node)
+	if err != nil {
+		log.Fatal(
+			"Unable to decode node url",
+			zap.Error(err),
+			zap.String("url", cfg.node),
+		)
+	}
+
+	// TODO(dhil) remove switch once crust is updated
+	if nodeURL.Scheme == "tcp" {
+		rpcClient, err := cosmosclient.NewClientFromNode(cfg.node)
+		if err != nil {
+			log.Fatal(
+				"Unable to create cosmos rpc client",
+				zap.Error(err),
+			)
+		}
+		return clientCtx.WithRPCClient(rpcClient)
+	}
+
+	// tls grpc
+	if nodeURL.Scheme == "https" {
+		grpcClient, err := grpc.Dial(nodeURL.Host, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})))
+		if err != nil {
+			panic(err)
+		}
+
+		return clientCtx.WithGRPCClient(grpcClient)
+	}
+
+	// no-tls grpc
+	host := nodeURL.Host
+	// it is possible that protocol wasn't provided, in such scenario we use the node as a host to dial
+	if host == "" {
+		host = cfg.node
+	}
+	grpcClient, err := grpc.Dial(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatal(
+			"Unable to create cosmos grpc client",
+			zap.Error(err),
+		)
+	}
+
+	return clientCtx.WithGRPCClient(grpcClient)
 }
 
 func setup() (context.Context, *zap.Logger, cfg) {
@@ -187,7 +234,7 @@ func getConfig(log *zap.Logger, flagSet *pflag.FlagSet) cfg {
 	var ipRateLimit string
 
 	flagSet.StringVar(&conf.chainID, flagChainID, string(constant.ChainIDDev), "The network chain ID")
-	flagSet.StringVar(&conf.node, flagNode, "tcp://localhost:26657", "<host>:<port> to Tendermint RPC interface for this chain")
+	flagSet.StringVar(&conf.node, flagNode, "localhost:9090", "<host>:<port> to Tendermint GRPC endpoint for this chain")
 	flagSet.StringVar(&conf.address, flagAddress, ":8090", "<host>:<port> address to start listening for http requests")
 	flagSet.Int64Var(&conf.transferAmount, flagTransferAmount, 1000000, "how much to transfer in each request")
 	flagSet.StringVar(&conf.mnemonicFilePath, flagMnemonicFilePath, "mnemonic.txt", "path to file containing mnemonic for private keys, each line containing one mnemonic")

@@ -155,7 +155,7 @@ func (b *Batcher) sendBatch(ctx context.Context, fromAddress sdk.AccAddress, ba 
 	ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
 	defer cancel()
 
-	var rsp = result{}
+	rsp := result{}
 	requests := []transferRequest{}
 	for _, r := range ba {
 		requests = append(requests, r.req)

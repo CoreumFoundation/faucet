@@ -5,15 +5,15 @@ package integrationtests
 import (
 	"bytes"
 	"context"
-	"encoding/hex"
 	"encoding/json"
 	"flag"
 	"io"
 	nethttp "net/http"
+	"strings"
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/client"
+	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -21,15 +21,15 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	"go.uber.org/zap/zaptest"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
+	"github.com/CoreumFoundation/coreum/pkg/client"
 	coreumconfig "github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
-	coreumtx "github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/faucet/http"
 	"github.com/CoreumFoundation/faucet/pkg/config"
 )
@@ -37,7 +37,7 @@ import (
 type testConfig struct {
 	coredAddress   string
 	faucetAddress  string
-	clientCtx      coreumtx.ClientContext
+	clientCtx      client.Context
 	transferAmount string
 	network        coreumconfig.Network
 }
@@ -45,21 +45,29 @@ type testConfig struct {
 var cfg testConfig
 
 func init() {
-	flag.StringVar(&cfg.coredAddress, "cored-address", "tcp://localhost:26657", "Address of cored node started by znet")
+	flag.StringVar(&cfg.coredAddress, "cored-address", "localhost:9090", "Address of cored node started by znet")
 	flag.StringVar(&cfg.faucetAddress, "faucet-address", "http://localhost:8090", "Address of the faucet")
 	flag.StringVar(&cfg.transferAmount, "transfer-amount", "1000000", "Amount transferred by faucet in each request")
 	// accept testing flags
 	testing.Init()
 	// parse additional flags
 	flag.Parse()
-	rpcClient, err := client.NewClientFromNode(cfg.coredAddress)
-	must.OK(err)
 	cfg.network, _ = coreumconfig.NetworkByChainID(constant.ChainIDDev)
 	cfg.network.SetSDKConfig()
-	cfg.clientCtx = coreumtx.NewClientContext(config.NewModuleManager()).
+	cfg.clientCtx = client.NewContext(client.DefaultContextConfig(), config.NewModuleManager()).
 		WithChainID(string(cfg.network.ChainID())).
-		WithClient(rpcClient).
 		WithBroadcastMode(flags.BroadcastBlock)
+
+	// TODO(dhil) remove switch once crust is updated
+	if strings.HasPrefix(cfg.coredAddress, "tcp") {
+		rpcClient, err := cosmosclient.NewClientFromNode(cfg.coredAddress)
+		must.OK(err)
+		cfg.clientCtx = cfg.clientCtx.WithRPCClient(rpcClient)
+	} else {
+		grpcClient, err := grpc.Dial(cfg.coredAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		must.OK(err)
+		cfg.clientCtx = cfg.clientCtx.WithGRPCClient(grpcClient)
+	}
 }
 
 func TestTransferRequest(t *testing.T) {
@@ -77,7 +85,7 @@ func TestTransferRequest(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, txHash, 64)
 
-	err = waitForTxInclusionAndSync(ctx, clientCtx, txHash)
+	_, err = client.AwaitTx(ctx, clientCtx, txHash)
 	require.NoError(t, err)
 
 	// query funds
@@ -87,48 +95,6 @@ func TestTransferRequest(t *testing.T) {
 
 	// make assertions
 	assert.EqualValues(t, cfg.transferAmount, resp.Balances.AmountOf(cfg.network.Denom()).String())
-}
-
-// waitForTxInclusionAndSync waits for one block, so all nodes are synced
-// it is possible that the tx and query requests go to different nodes and although
-// the tx is complete, the query will go to a different node which is not yet synced up
-// and does not have the transaction included in a block and its state will be different.
-// By waiting for one block we make sure that all nodes are synced on the previous block.
-func waitForTxInclusionAndSync(ctx context.Context, clientCtx coreumtx.ClientContext, txHash string) error {
-	txHashBytes, err := hex.DecodeString(txHash)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	var resultTx *ctypes.ResultTx
-	err = retry.Do(ctx, 200*time.Millisecond, func() error {
-		requestCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-		defer cancel()
-		resultTx, err = clientCtx.Client().Tx(requestCtx, txHashBytes, false)
-		if err != nil {
-			return retry.Retryable(err)
-		}
-		return nil
-	})
-	if err != nil {
-		return err
-	}
-
-	err = retry.Do(ctx, 200*time.Millisecond, func() error {
-		requestCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-		defer cancel()
-
-		height := resultTx.Height + 1
-		_, err := clientCtx.Client().Block(requestCtx, &height)
-		if err != nil {
-			return retry.Retryable(err)
-		}
-
-		return nil
-	})
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func TestTransferRequestWithGenPrivkey(t *testing.T) {
@@ -145,7 +111,7 @@ func TestTransferRequestWithGenPrivkey(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, response.TxHash, 64)
 
-	err = waitForTxInclusionAndSync(ctx, clientCtx, response.TxHash)
+	_, err = client.AwaitTx(ctx, clientCtx, response.TxHash)
 	require.NoError(t, err)
 
 	// query funds
