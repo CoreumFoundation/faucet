@@ -3,6 +3,8 @@ package main
 import (
 	"bufio"
 	"context"
+	"crypto/tls"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -18,6 +20,7 @@ import (
 	"github.com/spf13/pflag"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
@@ -42,7 +45,7 @@ const (
 	flagIPRateLimit      = "ip-rate-limit"
 )
 
-func main() { //nolint:funlen // it is expected for main func to be long.
+func main() {
 	ctx, log, cfg := setup()
 	if cfg.help {
 		return
@@ -93,26 +96,7 @@ func main() { //nolint:funlen // it is expected for main func to be long.
 		WithChainID(string(network.ChainID())).
 		WithBroadcastMode(flags.BroadcastBlock)
 
-	// TODO(dhil) remove switch once crust is updated
-	if strings.HasPrefix(cfg.node, "tcp") {
-		rpcClient, err := cosmosclient.NewClientFromNode(cfg.node)
-		if err != nil {
-			log.Fatal(
-				"Unable to create cosmos rpc client",
-				zap.Error(err),
-			)
-		}
-		clientCtx = clientCtx.WithRPCClient(rpcClient)
-	} else {
-		grpcClient, err := grpc.Dial(cfg.node, grpc.WithTransportCredentials(insecure.NewCredentials()))
-		if err != nil {
-			log.Fatal(
-				"Unable to create cosmos grpc client",
-				zap.Error(err),
-			)
-		}
-		clientCtx = clientCtx.WithGRPCClient(grpcClient)
-	}
+	clientCtx = addClient(cfg, log, clientCtx)
 
 	txf := client.Factory{}.
 		WithTxConfig(clientCtx.TxConfig()).
@@ -144,6 +128,55 @@ func main() { //nolint:funlen // it is expected for main func to be long.
 	if err != nil {
 		log.Fatal("Error on ListenAndServe", zap.Error(err))
 	}
+}
+
+func addClient(cfg cfg, log *zap.Logger, clientCtx client.Context) client.Context {
+	nodeURL, err := url.Parse(cfg.node)
+	if err != nil {
+		log.Fatal(
+			"Unable to decode node url",
+			zap.Error(err),
+			zap.String("url", cfg.node),
+		)
+	}
+
+	// TODO(dhil) remove switch once crust is updated
+	if nodeURL.Scheme == "tcp" {
+		rpcClient, err := cosmosclient.NewClientFromNode(cfg.node)
+		if err != nil {
+			log.Fatal(
+				"Unable to create cosmos rpc client",
+				zap.Error(err),
+			)
+		}
+		return clientCtx.WithRPCClient(rpcClient)
+	}
+
+	// tls grpc
+	if nodeURL.Scheme == "https" {
+		grpcClient, err := grpc.Dial(nodeURL.Host, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})))
+		if err != nil {
+			panic(err)
+		}
+
+		return clientCtx.WithGRPCClient(grpcClient)
+	}
+
+	// no-tls grpc
+	host := nodeURL.Host
+	// this situation is possible the protocol wasn't provided, in such senanario we use the
+	if host == "" {
+		host = cfg.node
+	}
+	grpcClient, err := grpc.Dial(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatal(
+			"Unable to create cosmos grpc client",
+			zap.Error(err),
+		)
+	}
+
+	return clientCtx.WithGRPCClient(grpcClient)
 }
 
 func setup() (context.Context, *zap.Logger, cfg) {
