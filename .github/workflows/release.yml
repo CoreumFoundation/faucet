@@ -57,6 +57,8 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           file: Dockerfile
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
           push: true
           # if tag is an empty string, plugin will skip that tag.
           tags: |
