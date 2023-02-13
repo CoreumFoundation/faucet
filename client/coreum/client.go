@@ -3,17 +3,18 @@ package coreum
 import (
 	"context"
 
+	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"go.uber.org/zap"
 
+	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/config"
-	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/faucet/pkg/logger"
 )
 
 // New returns an instance of the Client interface.
-func New(network config.Network, clientCtx tx.ClientContext, txf tx.Factory) Client {
+func New(network config.Network, clientCtx client.Context, txf client.Factory) Client {
 	return Client{
 		network:   network,
 		clientCtx: clientCtx,
@@ -23,7 +24,7 @@ func New(network config.Network, clientCtx tx.ClientContext, txf tx.Factory) Cli
 
 // Client is used to communicate with coreum blockchain.
 type Client struct {
-	clientCtx tx.ClientContext
+	clientCtx client.Context
 	network   config.Network
 	txf       tx.Factory
 }
@@ -61,7 +62,7 @@ func (c Client) TransferToken(
 	txf := c.txf.
 		WithSimulateAndExecute(true).
 		WithGasAdjustment(1.5)
-	result, err := tx.BroadcastTx(ctx, clientCtx, txf, msgs...)
+	result, err := client.BroadcastTx(ctx, clientCtx, txf, msgs...)
 	if err != nil {
 		return "", err
 	}
