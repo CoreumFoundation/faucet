@@ -1,15 +1,15 @@
 name: release
 on:
   push:
-#    branches:
-#      - 'master'
+    branches:
+      - 'master'
 
 env:
   REPO: faucet
   ORG: coreumfoundation
 
 jobs:
-  ci:
+  release:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
