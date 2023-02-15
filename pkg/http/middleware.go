@@ -38,6 +38,7 @@ func prepareRequestContextMiddleware(log *zap.Logger) func(HandlerFunc) HandlerF
 				zap.Stringer("userIP", userIP),
 				zap.String("requestID", rid),
 				zap.String("method", r.Method),
+				zap.Any("headers", r.Header),
 			)
 			ctx := logger.WithLogger(c.Request().Context(), logNew)
 			request := c.Request().WithContext(ctx)
@@ -54,7 +55,10 @@ func IPFromRequest(r *http.Request) (i net.IP, err error) {
 		return nil, errors.WithStack(err)
 	}
 
-	xForwardedFor := r.Header[echo.HeaderXForwardedFor]
+	xForwardedFor := r.Header["X-Original-Forwarded-For"]
+	if len(xForwardedFor) == 0 {
+		xForwardedFor = r.Header[echo.HeaderXForwardedFor]
+	}
 	if len(xForwardedFor) > 0 {
 		addrs := strings.Split(xForwardedFor[len(xForwardedFor)-1], ",")
 		if addr := strings.TrimSpace(addrs[len(addrs)-1]); addr != "" {
