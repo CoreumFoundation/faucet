@@ -38,7 +38,6 @@ func prepareRequestContextMiddleware(log *zap.Logger) func(HandlerFunc) HandlerF
 				zap.Stringer("userIP", userIP),
 				zap.String("requestID", rid),
 				zap.String("method", r.Method),
-				zap.Any("headers", r.Header),
 			)
 			ctx := logger.WithLogger(c.Request().Context(), logNew)
 			request := c.Request().WithContext(ctx)
