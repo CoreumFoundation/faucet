@@ -1,4 +1,4 @@
-name: release
+name: docker-build-push
 on:
   push:
 #    branches:
@@ -39,8 +39,4 @@ jobs:
             ${{ env.ORG }}/${{ env.REPO }}:latest
             ${{ env.ORG }}/${{ env.REPO }}:${{ env.SHA8 }}
             ${{ env.FULL_IMAGE_NAME_WITH_GIT_TAG }}
-
-
-
-
 
