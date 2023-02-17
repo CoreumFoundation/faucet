@@ -9,11 +9,9 @@ import (
 	"flag"
 	"io"
 	nethttp "net/http"
-	"strings"
 	"testing"
 	"time"
 
-	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -58,16 +56,9 @@ func init() {
 		WithChainID(string(cfg.network.ChainID())).
 		WithBroadcastMode(flags.BroadcastBlock)
 
-	// TODO(dhil) remove switch once crust is updated
-	if strings.HasPrefix(cfg.coredAddress, "tcp") {
-		rpcClient, err := cosmosclient.NewClientFromNode(cfg.coredAddress)
-		must.OK(err)
-		cfg.clientCtx = cfg.clientCtx.WithRPCClient(rpcClient)
-	} else {
-		grpcClient, err := grpc.Dial(cfg.coredAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
-		must.OK(err)
-		cfg.clientCtx = cfg.clientCtx.WithGRPCClient(grpcClient)
-	}
+	grpcClient, err := grpc.Dial(cfg.coredAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	must.OK(err)
+	cfg.clientCtx = cfg.clientCtx.WithGRPCClient(grpcClient)
 }
 
 func TestTransferRequest(t *testing.T) {
