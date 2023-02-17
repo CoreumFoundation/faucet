@@ -54,7 +54,10 @@ func IPFromRequest(r *http.Request) (i net.IP, err error) {
 		return nil, errors.WithStack(err)
 	}
 
-	xForwardedFor := r.Header[echo.HeaderXForwardedFor]
+	xForwardedFor := r.Header["X-Original-Forwarded-For"]
+	if len(xForwardedFor) == 0 {
+		xForwardedFor = r.Header[echo.HeaderXForwardedFor]
+	}
 	if len(xForwardedFor) > 0 {
 		addrs := strings.Split(xForwardedFor[len(xForwardedFor)-1], ",")
 		if addr := strings.TrimSpace(addrs[len(addrs)-1]); addr != "" {
