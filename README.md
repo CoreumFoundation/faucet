@@ -39,7 +39,7 @@ The network chain ID (default "coreum-devnet-1")
 
 path to file containing mnemonics of private keys, each line must contain one mnemonic (default "mnemonic.txt")
 
-### --node
+### --node (default "localhost:9090")
 <host>:<port> to Tendermint GRPC interface for this chain
 
 ### --log-format
@@ -51,24 +51,6 @@ Format of log output: console | json (default "json")
 How much to transfer in each request (default 1000000)
 
 ## API reference
-
-### `fund`
-
-Funds to the specified address.
-
-```shell script
-curl --location 'http://localhost:8090/api/faucet/v1/fund' \
---header 'Content-Type: application/json' \
---data '{
-    "address": "devcore19tmtuldmuamlzuv4xx704me7ns7yn07crdc4r3"
-}'
-```
-
-```json
-{
-    "txHash":"E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
-}
-```
 
 ### `fund`
 
