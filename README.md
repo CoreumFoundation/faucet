@@ -40,7 +40,7 @@ The network chain ID (default "coreum-devnet-1")
 path to file containing mnemonics of private keys, each line must contain one mnemonic (default "mnemonic.txt")
 
 ### --node
-<host>:<port> to Tendermint RPC interface for this chain (default "localhost:26657")
+<host>:<port> to Tendermint GRPC interface for this chain
 
 ### --log-format
 
@@ -52,18 +52,58 @@ How much to transfer in each request (default 1000000)
 
 ## API reference
 
-### `send_money`
+### `fund`
 
-Sends funds to the specified address.
+Funds to the specified address.
 
 ```shell script
-curl -H "Content-Type: application/json" -X POST \
-     -d '{"address":"devcore175m7gdsh9m0rm08a0w3eccz9r895t9jex0abcd"}' \
-     http://localhost:8090/api/faucet/v1/send-money
+curl --location 'http://localhost:8090/api/faucet/v1/fund' \
+--header 'Content-Type: application/json' \
+--data '{
+    "address": "devcore19tmtuldmuamlzuv4xx704me7ns7yn07crdc4r3"
+}'
 ```
 
 ```json
 {
     "txHash":"E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+}
+```
+
+### `fund`
+
+Funds to the specified address.
+
+```shell script
+curl --location 'http://localhost:8090/api/faucet/v1/fund' \
+--header 'Content-Type: application/json' \
+--data '{
+    "address": "devcore19tmtuldmuamlzuv4xx704me7ns7yn07crdc4r3"
+}'
+```
+
+```json
+{
+    "txHash":"E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+}
+```
+
+### `gen-funded`
+
+Generate funded account.
+
+```shell script
+curl --location 'http://localhost:8090/api/faucet/v1/gen-funded' \
+--header 'Content-Type: application/json' \
+--data '{
+    "address": "devcore175m7gdsh9m0rm08a0w3eccz9r895t9jex0abcd"
+}'
+```
+
+```json
+{
+  "txHash": "D039E2E8F4318A3C03F2B51D74E8E8CA8CFAFBC02B67E0A9716340B874347778",
+  "mnemonic": "day oyster today mechanic soup happy judge matter output asset tiny bundle galaxy theory witness act adapt company thought shock pole explain orchard surround",
+  "address": "devcore1lj597uzf689t0tpfxurhra9q9vtkxldezmtvwh"
 }
 ```
