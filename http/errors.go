@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	nethttp "net/http"
 
+	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
@@ -20,9 +21,17 @@ func writeErrorMiddleware() func(http.HandlerFunc) http.HandlerFunc {
 		return func(c http.Context) error {
 			err := next(c)
 			if err != nil {
-				logger.Get(c.Request().Context()).Error("Error processing request", zap.Error(err))
-				err := mapError(err)
-				return c.JSON(err.Status(), err)
+				// handle default echo errors such as 404
+				var echoError *echo.HTTPError
+				if errors.As(err, &echoError) {
+					return err
+				}
+				mappedError := mapError(err)
+				if mappedError.Loggable() {
+					logger.Get(c.Request().Context()).Error("Error processing request", zap.Error(err))
+				}
+
+				return c.JSON(mappedError.Status(), mappedError)
 			}
 			return nil
 		}
@@ -33,23 +42,30 @@ func writeErrorMiddleware() func(http.HandlerFunc) http.HandlerFunc {
 type APIError interface {
 	// Satisfy error interface.
 	error
+
 	// Override default marshaling.
 	json.Marshaler
-	// Method to return HTTP status code.
+
+	// Status method to return HTTP status code.
 	Status() int
+
+	// Loggable indicates whether we need to log that error.
+	Loggable() bool
 }
 
 type singleAPIError struct {
-	kind    string
-	message string
-	status  int
+	kind     string
+	message  string
+	status   int
+	loggable bool
 }
 
-func newSingleAPIError(kind, message string, status int) singleAPIError {
+func newSingleAPIError(kind, message string, status int, loggable bool) singleAPIError {
 	return singleAPIError{
-		kind:    kind,
-		message: message,
-		status:  status,
+		kind:     kind,
+		message:  message,
+		status:   status,
+		loggable: loggable,
 	}
 }
 
@@ -59,6 +75,10 @@ func (err singleAPIError) Error() string {
 
 func (err singleAPIError) Status() int {
 	return err.status
+}
+
+func (err singleAPIError) Loggable() bool {
+	return err.loggable
 }
 
 func (err singleAPIError) MarshalJSON() ([]byte, error) {
@@ -81,10 +101,10 @@ func (err singleAPIError) MarshalJSON() ([]byte, error) {
 
 func mapError(err error) APIError {
 	errList := map[error]singleAPIError{
-		app.ErrAddressPrefixUnsupported: newSingleAPIError("address.invalid", app.ErrAddressPrefixUnsupported.Error(), nethttp.StatusUnprocessableEntity),
-		app.ErrInvalidAddressFormat:     newSingleAPIError("address.invalid", app.ErrInvalidAddressFormat.Error(), nethttp.StatusUnprocessableEntity),
-		app.ErrUnableToTransferToken:    newSingleAPIError("server.internal_error", app.ErrUnableToTransferToken.Error(), nethttp.StatusInternalServerError),
-		ErrRateLimitExhausted:           newSingleAPIError("server.rate_limit", ErrRateLimitExhausted.Error(), nethttp.StatusTooManyRequests),
+		app.ErrAddressPrefixUnsupported: newSingleAPIError("address.invalid", app.ErrAddressPrefixUnsupported.Error(), nethttp.StatusUnprocessableEntity, false),
+		app.ErrInvalidAddressFormat:     newSingleAPIError("address.invalid", app.ErrInvalidAddressFormat.Error(), nethttp.StatusUnprocessableEntity, false),
+		app.ErrUnableToTransferToken:    newSingleAPIError("server.internal_error", app.ErrUnableToTransferToken.Error(), nethttp.StatusInternalServerError, true),
+		ErrRateLimitExhausted:           newSingleAPIError("server.rate_limit", ErrRateLimitExhausted.Error(), nethttp.StatusTooManyRequests, false),
 	}
 
 	for e, internalErr := range errList {
@@ -93,5 +113,5 @@ func mapError(err error) APIError {
 		}
 	}
 
-	return newSingleAPIError("server.internal_error", "internal error", nethttp.StatusInternalServerError)
+	return newSingleAPIError("server.internal_error", "internal error", nethttp.StatusInternalServerError, true)
 }
