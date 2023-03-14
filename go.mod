@@ -9,7 +9,7 @@ require (
 	github.com/CoreumFoundation/coreum-tools v0.4.0
 	github.com/cosmos/cosmos-sdk v0.45.11
 	github.com/google/uuid v1.3.0
-	github.com/labstack/echo/v4 v4.8.0
+	github.com/labstack/echo/v4 v4.9.0
 	github.com/pkg/errors v0.9.1
 	github.com/samber/lo v1.35.0
 	github.com/spf13/pflag v1.0.5
