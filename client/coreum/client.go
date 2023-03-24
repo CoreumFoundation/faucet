@@ -60,8 +60,7 @@ func (c Client) TransferToken(
 		WithFromAddress(fromAddress)
 
 	txf := c.txf.
-		WithSimulateAndExecute(true).
-		WithGasAdjustment(1.5)
+		WithSimulateAndExecute(true)
 	result, err := client.BroadcastTx(ctx, clientCtx, txf, msgs...)
 	if err != nil {
 		return "", err
