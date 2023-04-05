@@ -40,28 +40,31 @@ func (c Client) TransferToken(
 	fromAddress sdk.AccAddress,
 	requests ...transferRequest,
 ) (string, error) {
-	var msgs []sdk.Msg
 	toAddressList := []string{}
 	for _, rq := range requests {
 		toAddressList = append(toAddressList, rq.destAddress.String())
 	}
 	log := logger.Get(ctx).With(zap.Stringer("fromAddress", fromAddress), zap.Strings("toAddresses", toAddressList))
 	log.Info("Sending tokens")
+
+	msg := &banktypes.MsgMultiSend{}
+	sum := sdk.NewCoins()
 	for _, rq := range requests {
-		msg := &banktypes.MsgSend{
-			FromAddress: fromAddress.String(),
-			ToAddress:   rq.destAddress.String(),
-			Amount:      []sdk.Coin{rq.amount},
-		}
-		msgs = append(msgs, msg)
+		sum = sum.Add(rq.amount)
+		msg.Outputs = append(msg.Outputs, banktypes.Output{
+			Address: rq.destAddress.String(),
+			Coins:   sdk.NewCoins(rq.amount),
+		})
 	}
+	msg.Inputs = []banktypes.Input{{
+		Address: fromAddress.String(),
+		Coins:   sum,
+	}}
 	clientCtx := c.clientCtx.
 		WithFromName(fromAddress.String()).
 		WithFromAddress(fromAddress)
 
-	txf := c.txf.
-		WithSimulateAndExecute(true)
-	result, err := client.BroadcastTx(ctx, clientCtx, txf, msgs...)
+	result, err := client.BroadcastTx(ctx, clientCtx, c.txf.WithSimulateAndExecute(true), msg)
 	if err != nil {
 		return "", err
 	}
