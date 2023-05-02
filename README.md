@@ -48,7 +48,7 @@ Format of log output: console | json (default "json")
 
 ### --transfer-amount int
 
-How much to transfer in each request (default 1000000)
+How much to transfer in each request (default 100000000)
 
 ## API reference
 
