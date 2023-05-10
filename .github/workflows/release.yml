@@ -3,11 +3,32 @@ on:
   push:
     tags:
       - "v[0-9]+.[0-9]+.[0-9]+*"
+  workflow_dispatch:
 
 jobs:
-  ci:
+  release:
     runs-on: ubuntu-22.04
     steps:
+      - name: Checkout faucet
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+          path: faucet
+          fetch-depth: 0
+      - name: Checkout crust
+        uses: actions/checkout@v3
+        with:
+          repository: CoreumFoundation/crust
+          path: crust
+      - name: Set up crust
+        run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Build faucet release and push docker image
+        run: crust release/faucet release/images/faucet --log-format=yaml
       - name: Check Tag
         id: check-tag
         run: |
@@ -15,21 +36,28 @@ jobs:
               echo ::set-output name=release::true
           fi
           if [[ ${{ github.event.ref }} =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+-rc[0-9]+$ ]]; then
-              echo ::set-output name=release-candidate::true
+              echo ::set-output name=release_candidate::true
           fi
-      - name: Release
+      - name: Link released binaries under right names
+        run: |
+          ln crust/bin/.cache/faucet/docker.amd64/bin/faucet faucet-linux-amd64
+          ln crust/bin/.cache/faucet/docker.arm64/bin/faucet faucet-linux-arm64
+      - name: Create release
         if: steps.check-tag.outputs.release == 'true'
         uses: softprops/action-gh-release@v1
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           generate_release_notes: true
-      - name: Release-candidate
-        if: steps.check-tag.outputs.release-candidate == 'true'
+          files: |
+            faucet-linux-amd64
+            faucet-linux-arm64
+      - name: Create release candidate
+        if: steps.check-tag.outputs.release_candidate == 'true'
         uses: softprops/action-gh-release@v1
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: true
           generate_release_notes: true
-
-
-
-
-
+          files: |
+            faucet-linux-amd64
+            faucet-linux-arm64
