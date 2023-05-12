@@ -16,7 +16,6 @@ jobs:
         ci_step: [
           "lint",
           "test",
-          "build",
           "integration tests",
         ]
         include:
@@ -30,11 +29,6 @@ jobs:
             go-cache: true
             linter-cache: false
             docker-cache: false
-          - ci_step: "build"
-            command: "crust build/faucet --log-format=yaml"
-            go-cache: true
-            linter-cache: false
-            docker-cache: true
           - ci_step: "integration tests"
             command: "crust build/integration-tests/faucet images --log-format=yaml && crust znet test --test-groups=faucet --log-format=yaml"
             go-cache: true
