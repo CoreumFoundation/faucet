@@ -16,32 +16,22 @@ jobs:
         ci_step: [
           "lint",
           "test",
-          "build",
           "integration tests",
         ]
         include:
           - ci_step: "lint"
-            command: "crust lint/crust --log-format=yaml"
+            command: "crust lint/faucet --log-format=yaml"
             go-cache: true
-            wasm-cache: false
             linter-cache: true
             docker-cache: false
           - ci_step: "test"
-            command: "crust test/crust --log-format=yaml"
+            command: "crust test/faucet --log-format=yaml"
             go-cache: true
-            wasm-cache: false
             linter-cache: false
             docker-cache: false
-          - ci_step: "build"
-            command: "crust wasm build --log-format=yaml"
-            go-cache: true
-            wasm-cache: true
-            linter-cache: false
-            docker-cache: true
           - ci_step: "integration tests"
-            command: "crust wasm build/integration-tests images --log-format=yaml && crust znet test --test-groups=faucet --log-format=yaml"
+            command: "crust build/integration-tests/faucet images --log-format=yaml && crust znet test --test-groups=faucet --log-format=yaml"
             go-cache: true
-            wasm-cache: true
             linter-cache: false
             docker-cache: true
 
@@ -76,14 +66,6 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-      - name: Setup WASM cache
-        uses: actions/cache@v3
-        if: ${{ matrix.wasm-cache }}
-        with:
-          path: ~/.cache/crust/wasm
-          key: ${{ runner.os }}-wasm-cache-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-wasm-cache
       - name: Setup linter cache
         uses: actions/cache@v3
         if: ${{ matrix.linter-cache }}
