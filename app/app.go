@@ -13,13 +13,13 @@ import (
 type App struct {
 	batcher        Batcher
 	transferAmount sdk.Coin
-	network        config.Network
+	network        config.NetworkConfig
 }
 
 // New returns a new instance of the App.
 func New(
 	batcher Batcher,
-	network config.Network,
+	network config.NetworkConfig,
 	transferAmount sdk.Coin,
 ) App {
 	return App{
@@ -41,12 +41,12 @@ func (a App) GiveFunds(ctx context.Context, address string) (string, error) {
 		return "", errors.Wrapf(ErrInvalidAddressFormat, "err:%s", err)
 	}
 
-	if prefix != a.network.AddressPrefix() {
+	if prefix != a.network.AddressPrefix {
 		return "", errors.Wrapf(
 			ErrAddressPrefixUnsupported,
 			"account prefix (%s) does not match expected prefix (%s)",
 			prefix,
-			a.network.AddressPrefix(),
+			a.network.AddressPrefix,
 		)
 	}
 

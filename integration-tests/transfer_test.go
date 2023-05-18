@@ -37,7 +37,7 @@ type testConfig struct {
 	faucetAddress  string
 	clientCtx      client.Context
 	transferAmount string
-	network        coreumconfig.Network
+	network        coreumconfig.NetworkConfig
 }
 
 var cfg testConfig
@@ -50,7 +50,7 @@ func init() {
 	testing.Init()
 	// parse additional flags
 	flag.Parse()
-	cfg.network, _ = coreumconfig.NetworkByChainID(constant.ChainIDDev)
+	cfg.network, _ = coreumconfig.NetworkConfigByChainID(constant.ChainIDDev)
 	cfg.network.SetSDKConfig()
 	cfg.clientCtx = client.NewContext(client.DefaultContextConfig(), config.NewModuleManager()).
 		WithChainID(string(cfg.network.ChainID())).
