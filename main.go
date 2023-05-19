@@ -56,7 +56,7 @@ func main() {
 		zap.String("mnemonicFilePath", cfg.mnemonicFilePath),
 		zap.String("node", cfg.node))
 
-	network, err := coreumconfig.NetworkByChainID(constant.ChainID(cfg.chainID))
+	network, err := coreumconfig.NetworkConfigByChainID(constant.ChainID(cfg.chainID))
 	if err != nil {
 		log.Fatal(
 			"Unable to get network config for chain-id",
