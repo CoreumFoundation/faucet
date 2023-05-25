@@ -66,11 +66,12 @@ func (l *WeightedWindowLimiter) IsRequestAllowed(ip net.IP) bool {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	allowed := l.previous.GetProportionally(ip)+l.current.Get(ip) <= l.limit
-	if allowed {
-		l.current.Increment(ip)
-	}
-	return allowed
+	return l.previous.GetProportionally(ip)+l.current.Get(ip) <= l.limit
+}
+
+// Increment will consume rate limit by 1.
+func (l *WeightedWindowLimiter) Increment(ip net.IP) {
+	l.current.Increment(ip)
 }
 
 // Run runs cleaning task of the limiter.
