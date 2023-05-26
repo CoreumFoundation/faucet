@@ -37,20 +37,20 @@ type testConfig struct {
 	faucetAddress  string
 	clientCtx      client.Context
 	transferAmount string
-	network        coreumconfig.Network
+	network        coreumconfig.NetworkConfig
 }
 
 var cfg testConfig
 
 func init() {
-	flag.StringVar(&cfg.coredAddress, "cored-address", "localhost:9090", "Address of cored node started by znet")
+	flag.StringVar(&cfg.coredAddress, "coreum-address", "localhost:9090", "Address of cored node started by znet")
 	flag.StringVar(&cfg.faucetAddress, "faucet-address", "http://localhost:8090", "Address of the faucet")
-	flag.StringVar(&cfg.transferAmount, "transfer-amount", "1000000", "Amount transferred by faucet in each request")
+	flag.StringVar(&cfg.transferAmount, "transfer-amount", "100000000", "Amount transferred by faucet in each request")
 	// accept testing flags
 	testing.Init()
 	// parse additional flags
 	flag.Parse()
-	cfg.network, _ = coreumconfig.NetworkByChainID(constant.ChainIDDev)
+	cfg.network, _ = coreumconfig.NetworkConfigByChainID(constant.ChainIDDev)
 	cfg.network.SetSDKConfig()
 	cfg.clientCtx = client.NewContext(client.DefaultContextConfig(), config.NewModuleManager()).
 		WithChainID(string(cfg.network.ChainID())).

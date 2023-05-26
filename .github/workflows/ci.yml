@@ -4,6 +4,8 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+  schedule:
+    - cron: '0 1 * * 1' # At 01:00 on Monday
   workflow_dispatch:
 
 jobs:
@@ -11,7 +13,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ci_step: [ "lint", "test", "build", "integration tests" ]
+        ci_step: [
+          "lint",
+          "test",
+          "integration tests",
+        ]
         include:
           - ci_step: "lint"
             command: "crust lint/faucet --log-format=yaml"
@@ -23,13 +29,8 @@ jobs:
             go-cache: true
             linter-cache: false
             docker-cache: false
-          - ci_step: "build"
-            command: "crust build --log-format=yaml"
-            go-cache: true
-            linter-cache: false
-            docker-cache: true
           - ci_step: "integration tests"
-            command: "crust build/integration-tests images --log-format=yaml && crust znet test --test-groups=faucet --log-format=yaml"
+            command: "crust build/integration-tests/faucet images --log-format=yaml && crust znet test --test-groups=faucet --log-format=yaml"
             go-cache: true
             linter-cache: false
             docker-cache: true
@@ -38,6 +39,23 @@ jobs:
     steps:
       - name: Go version used to build crust tool
         run: go version
+      - name: Checkout faucet
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+          path: faucet
+      - name: Checkout coreum
+        uses: actions/checkout@v3
+        with:
+          repository: CoreumFoundation/coreum
+          path: coreum
+      - name: Checkout crust
+        uses: actions/checkout@v3
+        with:
+          repository: CoreumFoundation/crust
+          path: crust
+      - name: Set up crust
+        run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Setup go cache
         uses: actions/cache@v3
         if: ${{ matrix.go-cache }}
@@ -53,23 +71,20 @@ jobs:
         if: ${{ matrix.linter-cache }}
         with:
           path: ~/.cache/golangci-lint
-          key: ${{ runner.os }}-ci-cache
+          key: ${{ runner.os }}-linter-cache
+      - name: Get Date
+        id: get-year-week
+        run: |
+          echo "date=$(/bin/date -u "+%Y-%U")" >> $GITHUB_OUTPUT
+        shell: bash
       - name: Set docker cache
         uses: satackey/action-docker-layer-caching@v0.0.11
         if: ${{ matrix.docker-cache }}
         continue-on-error: true
-      - name: Checkout faucet
-        uses: actions/checkout@v3
         with:
-          persist-credentials: false
-          path: faucet
-      - name: Checkout crust
-        uses: actions/checkout@v3
-        with:
-          repository: CoreumFoundation/crust
-          path: crust
-      - name: Set up crust
-        run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
+          key: ${{ runner.os }}-docker-${{ steps.get-year-week.outputs.date }} # year-week key
+          restore-keys: |
+            ${{ runner.os }}-docker-
       - name: Run ${{ matrix.ci_step }}
         run: ${{ matrix.command }}
       - name: Dump docker logs on failure

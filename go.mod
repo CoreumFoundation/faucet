@@ -8,7 +8,7 @@ replace (
 )
 
 require (
-	github.com/CoreumFoundation/coreum v1.0.0
+	github.com/CoreumFoundation/coreum v1.0.1-0.20230518103111-c9a72d93f09a
 	github.com/CoreumFoundation/coreum-tools v0.4.0
 	github.com/cosmos/cosmos-sdk v0.45.14
 	github.com/google/uuid v1.3.0
@@ -68,7 +68,7 @@ require (
 	github.com/gogo/protobuf v1.3.3 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/golang/glog v1.0.0 // indirect
-	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/btree v1.1.2 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect

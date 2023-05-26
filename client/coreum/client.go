@@ -14,7 +14,7 @@ import (
 )
 
 // New returns an instance of the Client interface.
-func New(network config.Network, clientCtx client.Context, txf client.Factory) Client {
+func New(network config.NetworkConfig, clientCtx client.Context, txf client.Factory) Client {
 	return Client{
 		network:   network,
 		clientCtx: clientCtx,
@@ -25,7 +25,7 @@ func New(network config.Network, clientCtx client.Context, txf client.Factory) C
 // Client is used to communicate with coreum blockchain.
 type Client struct {
 	clientCtx client.Context
-	network   config.Network
+	network   config.NetworkConfig
 	txf       tx.Factory
 }
 

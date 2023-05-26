@@ -24,7 +24,12 @@ func limiterMiddleware(limiter limiter.PerIPLimiter) func(http.HandlerFunc) http
 			if !ip.IsPrivate() && !ip.IsLoopback() && !ip.IsLinkLocalUnicast() && !limiter.IsRequestAllowed(ip) {
 				return errors.Wrapf(ErrRateLimitExhausted, "ip %q has already used its rate limit", ip.String())
 			}
-			return next(c)
+			err = next(c)
+			if err == nil {
+				limiter.Increment(ip)
+			}
+
+			return err
 		}
 	}
 }
