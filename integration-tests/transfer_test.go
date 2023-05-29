@@ -19,11 +19,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap/zaptest"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	coreumconfig "github.com/CoreumFoundation/coreum/pkg/config"
@@ -64,9 +62,7 @@ func init() {
 func TestTransferRequest(t *testing.T) {
 	t.Parallel()
 
-	log := zaptest.NewLogger(t)
-	ctx := logger.WithLogger(context.Background(), log)
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	t.Cleanup(cancel)
 	address := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String()
 
@@ -91,9 +87,7 @@ func TestTransferRequest(t *testing.T) {
 func TestTransferRequestWithGenPrivkey(t *testing.T) {
 	t.Parallel()
 
-	log := zaptest.NewLogger(t)
-	ctx := logger.WithLogger(context.Background(), log)
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	t.Cleanup(cancel)
 
 	// request fund
