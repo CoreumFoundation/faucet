@@ -30,7 +30,7 @@ jobs:
             linter-cache: false
             docker-cache: false
           - ci_step: "integration tests"
-            command: "crust build/integration-tests/faucet images --log-format=yaml && crust znet test --test-groups=faucet --log-format=yaml"
+            command: "crust build/integration-tests/faucet images --log-format=yaml && crust znet test --test-groups=faucet"
             go-cache: true
             linter-cache: false
             docker-cache: true
