@@ -41,7 +41,7 @@ type testConfig struct {
 var cfg testConfig
 
 func init() {
-	flag.StringVar(&cfg.coredAddress, "coreum-address", "localhost:9090", "Address of cored node started by znet")
+	flag.StringVar(&cfg.coredAddress, "coreum-grpc-address", "localhost:9090", "Address of cored node started by znet")
 	flag.StringVar(&cfg.faucetAddress, "faucet-address", "http://localhost:8090", "Address of the faucet")
 	flag.StringVar(&cfg.transferAmount, "transfer-amount", "100000000", "Amount transferred by faucet in each request")
 	// accept testing flags
