@@ -17,7 +17,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/pkg/errors"
-	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -42,8 +41,6 @@ type testConfig struct {
 var cfg testConfig
 
 func init() {
-	// TODO(dzmitryhil) remove once we update the crust
-	flag.StringVar(lo.ToPtr(""), "coreum-address", "localhost:9090", "Address of cored node started by znet")
 	flag.StringVar(&cfg.coredAddress, "coreum-grpc-address", "localhost:9090", "Address of cored node started by znet")
 	flag.StringVar(&cfg.faucetAddress, "faucet-address", "http://localhost:8090", "Address of the faucet")
 	flag.StringVar(&cfg.transferAmount, "transfer-amount", "100000000", "Amount transferred by faucet in each request")
