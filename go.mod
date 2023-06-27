@@ -9,7 +9,7 @@ replace (
 
 require (
 	github.com/CoreumFoundation/coreum v1.0.1-0.20230518103111-c9a72d93f09a
-	github.com/CoreumFoundation/coreum-tools v0.4.0
+	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab
 	github.com/cosmos/cosmos-sdk v0.45.14
 	github.com/google/uuid v1.3.0
 	github.com/labstack/echo/v4 v4.9.0
