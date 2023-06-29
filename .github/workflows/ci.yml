@@ -20,17 +20,17 @@ jobs:
         ]
         include:
           - ci_step: "lint"
-            command: "crust lint/faucet --log-format=yaml"
+            command: "crust lint/faucet"
             go-cache: true
             linter-cache: true
             docker-cache: false
           - ci_step: "test"
-            command: "crust test/faucet --log-format=yaml"
+            command: "crust test/faucet"
             go-cache: true
             linter-cache: false
             docker-cache: false
           - ci_step: "integration tests"
-            command: "crust build/integration-tests/faucet images --log-format=yaml && crust znet test --test-groups=faucet"
+            command: "crust build/integration-tests/faucet images && crust znet test --test-groups=faucet"
             go-cache: true
             linter-cache: false
             docker-cache: true
