@@ -160,7 +160,7 @@ func (b *Batcher) sendBatch(ctx context.Context, fromAddress sdk.AccAddress, ba 
 	for _, r := range ba {
 		requests = append(requests, r.req)
 	}
-	// TODO: retry can be implemented to make it more resilient to network errors.
+
 	//nolint:contextcheck // We don't want to cancel requests on shutdown sequence
 	txHash, err := b.client.TransferToken(ctx, fromAddress, requests...)
 	if err != nil {
