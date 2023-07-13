@@ -13,10 +13,9 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
+	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	faucethttp "github.com/CoreumFoundation/faucet/pkg/http"
-
-	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
 )
 
 // RunMonitoring runs monitoring service.
