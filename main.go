@@ -36,12 +36,13 @@ import (
 )
 
 const (
-	flagChainID          = "chain-id"
-	flagNode             = "node"
-	flagAddress          = "address"
-	flagTransferAmount   = "transfer-amount"
-	flagMnemonicFilePath = "key-path-mnemonic"
-	flagIPRateLimit      = "ip-rate-limit"
+	flagChainID           = "chain-id"
+	flagNode              = "node"
+	flagAddress           = "address"
+	flagMonitoringAddress = "monitoring-address"
+	flagTransferAmount    = "transfer-amount"
+	flagMnemonicFilePath  = "key-path-mnemonic"
+	flagIPRateLimit       = "ip-rate-limit"
 )
 
 func main() {
@@ -120,6 +121,9 @@ func main() {
 		spawn("server", parallel.Fail, func(ctx context.Context) error {
 			return server.ListenAndServe(ctx, cfg.address)
 		})
+		spawn("monitoring", parallel.Fail, func(ctx context.Context) error {
+			return app.RunMonitoring(ctx, cfg.monitoringAddress, clientCtx, addresses, network.Denom())
+		})
 
 		return nil
 	})
@@ -182,13 +186,14 @@ func setup() (context.Context, *zap.Logger, cfg) {
 }
 
 type cfg struct {
-	chainID          string
-	node             string
-	mnemonicFilePath string
-	address          string
-	transferAmount   int64
-	ipRateLimit      rateLimit
-	help             bool
+	chainID           string
+	node              string
+	mnemonicFilePath  string
+	address           string
+	monitoringAddress string
+	transferAmount    int64
+	ipRateLimit       rateLimit
+	help              bool
 }
 
 func parseRateLimit(limit string) (rateLimit, error) {
@@ -223,6 +228,7 @@ func getConfig(log *zap.Logger, flagSet *pflag.FlagSet) cfg {
 	flagSet.StringVar(&conf.chainID, flagChainID, string(constant.ChainIDDev), "The network chain ID")
 	flagSet.StringVar(&conf.node, flagNode, "localhost:9090", "<host>:<port> to Tendermint GRPC endpoint for this chain")
 	flagSet.StringVar(&conf.address, flagAddress, ":8090", "<host>:<port> address to start listening for http requests")
+	flagSet.StringVar(&conf.monitoringAddress, flagMonitoringAddress, ":9090", "<host>:<port> address to expose metrics to")
 	flagSet.Int64Var(&conf.transferAmount, flagTransferAmount, 100000000, "how much to transfer in each request")
 	flagSet.StringVar(&conf.mnemonicFilePath, flagMnemonicFilePath, "mnemonic.txt", "path to file containing mnemonic for private keys, each line containing one mnemonic")
 	flagSet.StringVar(&ipRateLimit, flagIPRateLimit, "2/1h", "limit of requests per IP in the format <num-of-req>/<period>")

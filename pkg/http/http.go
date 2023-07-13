@@ -85,7 +85,7 @@ func (s Server) shutdown(ctx context.Context, forceShutdownTimeout time.Duration
 	<-ctx.Done()
 	log := logger.Get(ctx)
 
-	ctx, cancel := context.WithTimeout(newReopenedCtx(ctx), forceShutdownTimeout)
+	ctx, cancel := context.WithTimeout(NewReopenedCtx(ctx), forceShutdownTimeout)
 	defer cancel()
 
 	log.Info("Starting graceful shutdown")
@@ -97,10 +97,10 @@ func (s Server) shutdown(ctx context.Context, forceShutdownTimeout time.Duration
 	return errors.WithStack(ctx.Err())
 }
 
-// newReopenedCtx returns a context that inherits all the values stored in the given
+// NewReopenedCtx returns a context that inherits all the values stored in the given
 // parent context, but not tied to the parent's lifespan. The returned context
 // has no deadline. Reopen can even be used on an already closed context, hence the name.
-func newReopenedCtx(ctx context.Context) context.Context {
+func NewReopenedCtx(ctx context.Context) context.Context {
 	return reopenedCtx{Context: ctx}
 }
 
