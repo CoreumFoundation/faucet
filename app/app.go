@@ -6,7 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 
-	"github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/v2/pkg/config"
 )
 
 // App implements core functionality.
@@ -41,12 +41,12 @@ func (a App) GiveFunds(ctx context.Context, address string) (string, error) {
 		return "", errors.Wrapf(ErrInvalidAddressFormat, "err:%s", err)
 	}
 
-	if prefix != a.network.AddressPrefix {
+	if prefix != a.network.Provider.GetAddressPrefix() {
 		return "", errors.Wrapf(
 			ErrAddressPrefixUnsupported,
 			"account prefix (%s) does not match expected prefix (%s)",
 			prefix,
-			a.network.AddressPrefix,
+			a.network.Provider.GetAddressPrefix(),
 		)
 	}
 
