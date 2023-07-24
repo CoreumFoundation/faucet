@@ -23,9 +23,9 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
-	"github.com/CoreumFoundation/coreum/pkg/client"
-	coreumconfig "github.com/CoreumFoundation/coreum/pkg/config"
-	"github.com/CoreumFoundation/coreum/pkg/config/constant"
+	"github.com/CoreumFoundation/coreum/v2/pkg/client"
+	coreumconfig "github.com/CoreumFoundation/coreum/v2/pkg/config"
+	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
 	"github.com/CoreumFoundation/faucet/app"
 	"github.com/CoreumFoundation/faucet/client/coreum"
 	"github.com/CoreumFoundation/faucet/http"
