@@ -42,6 +42,7 @@ jobs:
         run: |
           ln crust/bin/.cache/faucet/docker.amd64/bin/faucet faucet-linux-amd64
           ln crust/bin/.cache/faucet/docker.arm64/bin/faucet faucet-linux-arm64
+          sha256sum faucet-* > checksums.txt
       - name: Create release
         if: steps.check-tag.outputs.release == 'true'
         uses: softprops/action-gh-release@v1
@@ -51,6 +52,7 @@ jobs:
           files: |
             faucet-linux-amd64
             faucet-linux-arm64
+            checksums.txt
       - name: Create release candidate
         if: steps.check-tag.outputs.release_candidate == 'true'
         uses: softprops/action-gh-release@v1
@@ -61,3 +63,4 @@ jobs:
           files: |
             faucet-linux-amd64
             faucet-linux-arm64
+            checksums.txt
