@@ -226,7 +226,6 @@ func getConfig(log *zap.Logger, flagSet *pflag.FlagSet) cfg {
 	var ipRateLimit string
 
 	flagSet.StringVar(&conf.chainID, flagChainID, string(constant.ChainIDDev), "The network chain ID")
-
 	flagSet.StringVar(&conf.node, flagNode, "localhost:9090", "<host>:<port> to Tendermint GRPC endpoint for this chain")
 	flagSet.StringVar(&conf.address, flagAddress, ":8090", "<host>:<port> address to start listening for http requests")
 	flagSet.StringVar(&conf.monitoringAddress, flagMonitoringAddress, ":8091", "<host>:<port> address to expose metrics to")
