@@ -70,8 +70,8 @@ func TestBatchSend(t *testing.T) {
 	for i := 0; i < requestCount; i++ {
 		go func() {
 			txHash, err := batcher.SendToken(ctx, nil, amount)
-			assertT.NoError(err)
-			assertT.Greater(len(txHash), 1)
+			requireT.NoError(err)
+			assertT.Greater(len(txHash), 1) //nolint:testifylint // it suggests to use `NotEmpty` which is a nonsense here
 			wg.Done()
 		}()
 	}

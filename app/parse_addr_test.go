@@ -3,7 +3,7 @@ package app
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseAddress(t *testing.T) {
@@ -42,15 +42,15 @@ func TestParseAddress(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			assertT := assert.New(t)
+			requireT := require.New(t)
 			prefix, addr, err := parseAddress(tc.address)
-			assertT.EqualValues(tc.expectedPrefix, prefix)
+			requireT.EqualValues(tc.expectedPrefix, prefix)
 			if !tc.verifyError {
-				assertT.NoError(err)
-				assertT.NotNil(addr)
+				requireT.NoError(err)
+				requireT.NotNil(addr)
 			} else {
-				assertT.Error(err)
-				assertT.Nil(addr)
+				requireT.Error(err)
+				requireT.Nil(addr)
 			}
 		})
 	}

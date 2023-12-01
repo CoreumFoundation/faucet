@@ -117,8 +117,8 @@ func TestTransferRequest_WrongAddress(t *testing.T) {
 	// request fund
 	clientCtx := cfg.clientCtx
 	txHash, err := requestFunds(ctx, address)
-	assert.Error(t, err)
-	assert.Len(t, txHash, 0)
+	require.Error(t, err)
+	assert.Empty(t, txHash)
 
 	// query funds
 	bankQueryClient := banktypes.NewQueryClient(clientCtx)
