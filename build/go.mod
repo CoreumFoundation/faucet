@@ -2,8 +2,6 @@ module github.com/CoreumFoundation/faucet/build
 
 go 1.21
 
-replace github.com/CoreumFoundation/faucet => ../
-
 require (
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab
 	github.com/CoreumFoundation/crust/build v0.0.0-20240221111501-24517d1ac71b
