@@ -18,7 +18,7 @@ $ go build -o faucet
 ```
 
 ## Flags
-test
+
 All the flags are optional. Execute
 
 ```
