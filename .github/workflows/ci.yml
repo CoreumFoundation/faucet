@@ -33,7 +33,7 @@ jobs:
             command: |
               faucet-builder build/integration-tests images
               coreum-builder images
-              crust znet test --test-groups=faucet" --timeout-commit 0.5s
+              crust znet test --test-groups=faucet --timeout-commit 0.5s
               crust znet stop
               crust znet coverage-convert
             go-cache: true
