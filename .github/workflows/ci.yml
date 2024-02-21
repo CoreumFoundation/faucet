@@ -67,7 +67,7 @@ jobs:
           faucet/bin/faucet-builder build/me
       - name: Retrieve go version
         id: goversion
-        run: echo "GO_VERSION=$(coreum/bin/go version)" >> $GITHUB_OUTPUT
+        run: echo "GO_VERSION=$(faucet/bin/go version)" >> $GITHUB_OUTPUT
       - name: Print go version
         run: echo ${{ steps.goversion.outputs.GO_VERSION }}
       - name: Setup go cache
