@@ -7,8 +7,8 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/crust/build/config"
 	"github.com/CoreumFoundation/crust/build/docker"
-	"github.com/CoreumFoundation/crust/build/faucet/image"
 	"github.com/CoreumFoundation/crust/build/tools"
+	"github.com/CoreumFoundation/faucet/build/faucet/image"
 )
 
 type imageConfig struct {
