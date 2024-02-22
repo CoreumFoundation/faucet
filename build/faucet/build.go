@@ -5,14 +5,12 @@ import (
 	"path/filepath"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
-	"github.com/CoreumFoundation/crust/build/git"
 	"github.com/CoreumFoundation/crust/build/golang"
 	"github.com/CoreumFoundation/crust/build/tools"
 )
 
 const (
-	repoURL        = "https://github.com/CoreumFoundation/faucet.git"
-	repoPath       = "../faucet"
+	repoPath       = "."
 	binaryName     = "faucet"
 	binaryPath     = "bin/" + binaryName
 	testBinaryPath = "bin/.cache/integration-tests/faucet"
@@ -30,8 +28,6 @@ func buildFaucet(
 	targetPlatform tools.TargetPlatform,
 	extraFlags []string,
 ) error {
-	deps(ensureRepo)
-
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: targetPlatform,
 		PackagePath:    repoPath,
@@ -42,10 +38,10 @@ func buildFaucet(
 
 // BuildIntegrationTests builds faucet integration tests.
 func BuildIntegrationTests(ctx context.Context, deps build.DepsFunc) error {
-	deps(golang.EnsureGo, ensureRepo)
+	deps(golang.EnsureGo)
 
 	return golang.BuildTests(ctx, golang.TestBuildConfig{
-		PackagePath:   "../faucet/integration-tests",
+		PackagePath:   filepath.Join(repoPath, "integration-tests"),
 		BinOutputPath: testBinaryPath,
 		Tags:          []string{"integrationtests"},
 	})
@@ -53,22 +49,15 @@ func BuildIntegrationTests(ctx context.Context, deps build.DepsFunc) error {
 
 // Tidy runs `go mod tidy` for faucet repo.
 func Tidy(ctx context.Context, deps build.DepsFunc) error {
-	deps(ensureRepo)
 	return golang.Tidy(ctx, repoPath, deps)
 }
 
 // Lint lints faucet repo.
 func Lint(ctx context.Context, deps build.DepsFunc) error {
-	deps(ensureRepo)
 	return golang.Lint(ctx, repoPath, deps)
 }
 
 // Test run unit tests in faucet repo.
 func Test(ctx context.Context, deps build.DepsFunc) error {
-	deps(ensureRepo)
 	return golang.Test(ctx, repoPath, deps)
-}
-
-func ensureRepo(ctx context.Context, deps build.DepsFunc) error {
-	return git.EnsureRepo(ctx, repoURL)
 }

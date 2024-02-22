@@ -24,7 +24,7 @@ func main() {
 		}
 
 		changeWorkingDir()
-		return build.Do(ctx, "coreum", flags.Args(), exec)
+		return build.Do(ctx, "faucet", flags.Args(), exec)
 	})
 }
 
