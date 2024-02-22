@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	repoPath       = "../faucet"
+	repoPath       = "."
 	binaryName     = "faucet"
 	binaryPath     = "bin/" + binaryName
 	testBinaryPath = "bin/.cache/integration-tests/faucet"
