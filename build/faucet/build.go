@@ -41,7 +41,7 @@ func BuildIntegrationTests(ctx context.Context, deps build.DepsFunc) error {
 	deps(golang.EnsureGo)
 
 	return golang.BuildTests(ctx, golang.TestBuildConfig{
-		PackagePath:   "../faucet/integration-tests",
+		PackagePath:   filepath.Join(repoPath, "integration-tests"),
 		BinOutputPath: testBinaryPath,
 		Tags:          []string{"integrationtests"},
 	})
