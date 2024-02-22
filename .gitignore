@@ -3,3 +3,5 @@
 vendor
 *.iml
 mnemonic.txt
+/coverage
+/bin

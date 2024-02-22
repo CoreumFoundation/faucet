@@ -55,7 +55,8 @@ type Server struct {
 
 // Start begins listening and serving http requests with graceful shut down. graceful shutdown signal should be
 // passed to the function as input and should come from the signal package.
-// NOTE: graceful shutdown does not handle websocket and other hijacked connections (because it relies on http.server#Shutdown).
+// NOTE: graceful shutdown does not handle websocket and other hijacked connections
+// (because it relies on http.server#Shutdown).
 func (s Server) Start(ctx context.Context, listenAddress string, forceShutdownTimeout time.Duration) error {
 	listener, err := net.Listen("tcp", listenAddress)
 	if err != nil {
