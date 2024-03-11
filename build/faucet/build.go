@@ -10,11 +10,13 @@ import (
 )
 
 const (
-	repoPath       = "."
-	binaryName     = "faucet"
-	binaryPath     = "bin/" + binaryName
-	testBinaryPath = "bin/.cache/integration-tests/faucet"
-	goCoverFlag    = "-cover"
+	repoPath         = "."
+	binaryName       = "faucet"
+	binaryPath       = "bin/" + binaryName
+	testBinaryPath   = "bin/.cache/integration-tests/faucet"
+	goCoverFlag      = "-cover"
+	binaryOutputFlag = "-o"
+	tagsFlag         = "-tags"
 )
 
 // Build builds faucet in docker.
@@ -28,11 +30,12 @@ func buildFaucet(
 	targetPlatform tools.TargetPlatform,
 	extraFlags []string,
 ) error {
+	binOutputPath := filepath.Join("bin", ".cache", binaryName, targetPlatform.String(), "bin", binaryName)
+
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: targetPlatform,
 		PackagePath:    repoPath,
-		BinOutputPath:  filepath.Join("bin", ".cache", binaryName, targetPlatform.String(), "bin", binaryName),
-		Flags:          extraFlags,
+		Flags:          append(extraFlags, binaryOutputFlag+"="+binOutputPath),
 	})
 }
 
@@ -41,9 +44,11 @@ func BuildIntegrationTests(ctx context.Context, deps build.DepsFunc) error {
 	deps(golang.EnsureGo)
 
 	return golang.BuildTests(ctx, golang.TestBuildConfig{
-		PackagePath:   filepath.Join(repoPath, "integration-tests"),
-		BinOutputPath: testBinaryPath,
-		Tags:          []string{"integrationtests"},
+		PackagePath: filepath.Join(repoPath, "integration-tests"),
+		Flags: []string{
+			binaryOutputFlag + "=" + testBinaryPath,
+			tagsFlag + "=" + "integrationtests",
+		},
 	})
 }
 
