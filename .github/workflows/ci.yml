@@ -45,17 +45,17 @@ jobs:
       - name: Go version used to build builder
         run: go version
       - name: Checkout faucet
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
           path: faucet
       - name: Checkout coreum
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: CoreumFoundation/coreum
           path: coreum
       - name: Checkout crust
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: CoreumFoundation/crust
           path: crust
@@ -71,7 +71,7 @@ jobs:
       - name: Print go version
         run: echo ${{ steps.goversion.outputs.GO_VERSION }}
       - name: Setup go cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         if: ${{ matrix.go-cache }}
         with:
           path: |
@@ -79,7 +79,7 @@ jobs:
             ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}-${{ steps.goversion.outputs.GO_VERSION }}
       - name: Setup linter cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         if: ${{ matrix.linter-cache }}
         with:
           path: ~/.cache/golangci-lint
