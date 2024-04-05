@@ -3,8 +3,8 @@ module github.com/CoreumFoundation/faucet/build
 go 1.21
 
 require (
-	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab
-	github.com/CoreumFoundation/crust/build v0.0.0-20240306094644-ef2b09e2d127
+	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20240321120602-0a9c50facc68
+	github.com/CoreumFoundation/crust/build v0.0.0-20240405060126-d50d9a6ccafa
 	github.com/pkg/errors v0.9.1
 )
 

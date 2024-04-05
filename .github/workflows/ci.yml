@@ -31,9 +31,10 @@ jobs:
             docker-cache: false
           - ci_step: "integration tests"
             command: |
-              faucet-builder build/integration-tests images
-              coreum-builder images
-              crust znet test --test-groups=faucet --timeout-commit 0.5s
+              faucet-builder images
+              coreum-builder build images
+              crust znet start --profiles=faucet --timeout-commit 0.5s
+              faucet-builder integration-tests
               crust znet stop
               crust znet coverage-convert
             go-cache: true
@@ -95,6 +96,15 @@ jobs:
         continue-on-error: true
         with:
           key: ${{ runner.os }}-docker-v2-${{ steps.get-year-week.outputs.date }} # year-week key
+      - name: Prepare dependencies
+        # FIXME (wojciech): Execute `download` commands for crust and coreum builders once available
+        run: |
+          crust build/me
+          crust build
+          crust znet remove
+          coreum-builder build/me
+          faucet-builder build/me
+          faucet-builder download
       - name: Run ${{ matrix.ci_step }}
         run: ${{ matrix.command }}
       - name: Dump docker logs on failure

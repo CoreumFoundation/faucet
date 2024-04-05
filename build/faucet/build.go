@@ -13,7 +13,6 @@ const (
 	repoPath         = "."
 	binaryName       = "faucet"
 	binaryPath       = "bin/" + binaryName
-	testBinaryPath   = "bin/.cache/integration-tests/faucet"
 	goCoverFlag      = "-cover"
 	binaryOutputFlag = "-o"
 	tagsFlag         = "-tags"
@@ -39,14 +38,11 @@ func buildFaucet(
 	})
 }
 
-// BuildIntegrationTests builds faucet integration tests.
-func BuildIntegrationTests(ctx context.Context, deps build.DepsFunc) error {
-	deps(golang.EnsureGo)
-
-	return golang.BuildTests(ctx, golang.TestBuildConfig{
+// RunIntegrationTests runs faucet integration tests.
+func RunIntegrationTests(ctx context.Context, deps build.DepsFunc) error {
+	return golang.RunTests(ctx, deps, golang.TestConfig{
 		PackagePath: filepath.Join(repoPath, "integration-tests"),
 		Flags: []string{
-			binaryOutputFlag + "=" + testBinaryPath,
 			tagsFlag + "=" + "integrationtests",
 		},
 	})
@@ -65,4 +61,9 @@ func Lint(ctx context.Context, deps build.DepsFunc) error {
 // Test run unit tests in faucet repo.
 func Test(ctx context.Context, deps build.DepsFunc) error {
 	return golang.Test(ctx, repoPath, deps)
+}
+
+// DownloadDependencies downloads go dependencies.
+func DownloadDependencies(ctx context.Context, deps build.DepsFunc) error {
+	return golang.DownloadDependencies(ctx, repoPath, deps)
 }
