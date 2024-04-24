@@ -35,7 +35,7 @@ func buildFaucet(
 		TargetPlatform: targetPlatform,
 		PackagePath:    repoPath,
 		BinOutputPath:  binOutputPath,
-		Flags:          append(extraFlags),
+		Flags:          extraFlags,
 	})
 }
 
