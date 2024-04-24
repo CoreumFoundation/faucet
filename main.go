@@ -23,9 +23,9 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
-	"github.com/CoreumFoundation/coreum/v2/pkg/client"
-	coreumconfig "github.com/CoreumFoundation/coreum/v2/pkg/config"
-	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
+	"github.com/CoreumFoundation/coreum/v4/pkg/client"
+	coreumconfig "github.com/CoreumFoundation/coreum/v4/pkg/config"
+	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
 	"github.com/CoreumFoundation/faucet/app"
 	"github.com/CoreumFoundation/faucet/client/coreum"
 	"github.com/CoreumFoundation/faucet/http"
@@ -72,12 +72,18 @@ func main() {
 
 	network.SetSDKConfig()
 
+	clientCtx := client.NewContext(client.DefaultContextConfig(), config.NewModuleManager()).
+		WithChainID(string(network.ChainID())).
+		WithBroadcastMode(flags.BroadcastSync)
+
+	clientCtx = addClient(cfg, log, clientCtx)
+
 	transferAmount := sdk.Coin{
 		Amount: sdk.NewInt(cfg.transferAmount),
 		Denom:  network.Denom(),
 	}
 
-	kr, addresses, err := newKeyringFromFile(cfg.mnemonicFilePath)
+	kr, addresses, err := newKeyringFromFile(cfg.mnemonicFilePath, clientCtx)
 	if err != nil {
 		log.Fatal(
 			"Unable to create keyring",
@@ -91,12 +97,6 @@ func main() {
 		addrList = append(addrList, addr.String())
 	}
 	log.Info("funding account addresses", zap.Strings("addresses", addrList))
-
-	clientCtx := client.NewContext(client.DefaultContextConfig(), config.NewModuleManager()).
-		WithChainID(string(network.ChainID())).
-		WithBroadcastMode(flags.BroadcastBlock)
-
-	clientCtx = addClient(cfg, log, clientCtx)
 
 	txf := client.Factory{}.
 		WithTxConfig(clientCtx.TxConfig()).
@@ -114,7 +114,7 @@ func main() {
 		application := app.New(batcher, network, transferAmount)
 		ipLimiter := limiter.NewWeightedWindowLimiter(cfg.ipRateLimit.howMany, cfg.ipRateLimit.period)
 		//nolint:contextcheck
-		server := http.New(application, ipLimiter, log)
+		server := http.New(clientCtx, application, ipLimiter, log)
 
 		spawn("batcher", parallel.Fail, batcher.Run)
 		spawn("limiterCleanup", parallel.Fail, ipLimiter.Run)
@@ -252,23 +252,26 @@ func getConfig(log *zap.Logger, flagSet *pflag.FlagSet) cfg {
 	return conf
 }
 
-func newKeyringFromFile(path string) (keyring.Keyring, []sdk.AccAddress, error) {
+func newKeyringFromFile(path string, ctx client.Context) (keyring.Keyring, []sdk.AccAddress, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, nil, errors.Wrapf(err, "unable to open file at %s", path)
 	}
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
-	kr := keyring.NewInMemory()
+	kr := keyring.NewInMemory(ctx.Codec())
 	var addresses []sdk.AccAddress
 	for scanner.Scan() {
 		mnemonic := scanner.Text()
-		tempKr := keyring.NewInMemory()
+		tempKr := keyring.NewInMemory(ctx.Codec())
 		info, err := tempKr.NewAccount("temp", mnemonic, "", sdk.GetConfig().GetFullBIP44Path(), hd.Secp256k1)
 		if err != nil {
 			return nil, nil, errors.Wrapf(err, "unable to parse mnemonic key")
 		}
-		address := info.GetAddress()
+		address, err := info.GetAddress()
+		if err != nil {
+			return nil, nil, errors.Wrapf(err, "unable to get address")
+		}
 		addresses = append(addresses, address)
 		_, err = kr.NewAccount(address.String(), mnemonic, "", sdk.GetConfig().GetFullBIP44Path(), hd.Secp256k1)
 		if err != nil {
