@@ -41,7 +41,7 @@ func buildFaucet(
 // RunIntegrationTests runs faucet integration tests.
 func RunIntegrationTests(ctx context.Context, deps build.DepsFunc) error {
 	return golang.RunTests(ctx, deps, golang.TestConfig{
-		PackagePath: filepath.Join("/Users/masihyeganeh/Development/coreum/faucet", "integration-tests"),
+		PackagePath: filepath.Join(repoPath, "integration-tests"),
 		Flags: []string{
 			tagsFlag + "=" + "integrationtests",
 		},
