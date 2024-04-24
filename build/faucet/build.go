@@ -34,7 +34,8 @@ func buildFaucet(
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: targetPlatform,
 		PackagePath:    repoPath,
-		Flags:          append(extraFlags, binaryOutputFlag+"="+binOutputPath),
+		BinOutputPath:  binOutputPath,
+		Flags:          append(extraFlags),
 	})
 }
 
