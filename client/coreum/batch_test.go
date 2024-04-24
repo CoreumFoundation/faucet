@@ -49,7 +49,7 @@ func TestBatchSend(t *testing.T) {
 	amount := sdk.NewCoin("test-denom", sdk.NewInt(13))
 	fundingAddresses := []sdk.AccAddress{}
 	for i := 0; i < 2; i++ {
-		address, err := sdk.AccAddressFromBech32(secp256k1.GenPrivKey().PubKey().Address().String())
+		address, err := sdk.AccAddressFromHexUnsafe(secp256k1.GenPrivKey().PubKey().Address().String())
 		fundingAddresses = append(fundingAddresses, address)
 		requireT.NoError(err)
 	}
