@@ -16,7 +16,7 @@ replace (
 require (
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab
 	// FIXME: Change the hash after merging the PR on coerum
-	github.com/CoreumFoundation/coreum/v4 v4.0.0-20240424172443-29753b6d3f3b
+	github.com/CoreumFoundation/coreum/v4 v4.0.0-20240424174227-c078497c3fd9
 	github.com/cosmos/cosmos-sdk v0.47.10
 	github.com/google/uuid v1.4.0
 	github.com/labstack/echo/v4 v4.10.0
