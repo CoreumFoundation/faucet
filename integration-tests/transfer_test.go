@@ -60,8 +60,6 @@ func init() {
 }
 
 func TestTransferRequest(t *testing.T) {
-	t.Parallel()
-
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	t.Cleanup(cancel)
 	address := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String()
@@ -85,8 +83,6 @@ func TestTransferRequest(t *testing.T) {
 }
 
 func TestTransferRequestWithGenPrivkey(t *testing.T) {
-	t.Parallel()
-
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	t.Cleanup(cancel)
 
@@ -109,8 +105,6 @@ func TestTransferRequestWithGenPrivkey(t *testing.T) {
 }
 
 func TestTransferRequest_WrongAddress(t *testing.T) {
-	t.Parallel()
-
 	ctx := context.Background()
 	address := "core1hrlnys435ph2gehthddlg2g2s246my30q0gfs2"
 
