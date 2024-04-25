@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 
-	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -18,9 +17,8 @@ type GenMnemonicAndFundResult struct {
 }
 
 // GenMnemonicAndFund generates a private key and funds it.
-func (a App) GenMnemonicAndFund(ctx context.Context, codec codec.Codec) (GenMnemonicAndFundResult, error) {
-	kr := keyring.NewInMemory(codec)
-	info, mnemonic, err := kr.NewMnemonic("", keyring.English, sdk.GetConfig().GetFullBIP44Path(), "", hd.Secp256k1)
+func (a App) GenMnemonicAndFund(ctx context.Context) (GenMnemonicAndFundResult, error) {
+	info, mnemonic, err := a.clientCtx.Keyring().NewMnemonic("", keyring.English, sdk.GetConfig().GetFullBIP44Path(), "", hd.Secp256k1)
 	if err != nil {
 		return GenMnemonicAndFundResult{}, errors.Wrapf(ErrUnableToTransferToken, "err:%s", err)
 	}

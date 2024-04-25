@@ -11,8 +11,11 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	"github.com/cosmos/cosmos-sdk/std"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	"github.com/pkg/errors"
@@ -26,6 +29,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v4/pkg/client"
 	coreumconfig "github.com/CoreumFoundation/coreum/v4/pkg/config"
 	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
+	coreumkeyring "github.com/CoreumFoundation/coreum/v4/pkg/keyring"
 	"github.com/CoreumFoundation/faucet/app"
 	"github.com/CoreumFoundation/faucet/client/coreum"
 	"github.com/CoreumFoundation/faucet/http"
@@ -72,9 +76,13 @@ func main() {
 
 	network.SetSDKConfig()
 
+	interfaceRegistry := types.NewInterfaceRegistry()
+	std.RegisterInterfaces(interfaceRegistry)
+
 	clientCtx := client.NewContext(client.DefaultContextConfig(), config.NewModuleManager()).
 		WithChainID(string(network.ChainID())).
-		WithBroadcastMode(flags.BroadcastSync)
+		WithBroadcastMode(flags.BroadcastSync).
+		WithCodec(codec.NewProtoCodec(interfaceRegistry))
 
 	clientCtx = addClient(cfg, log, clientCtx)
 
@@ -92,6 +100,8 @@ func main() {
 		)
 	}
 
+	clientCtx = clientCtx.WithKeyring(coreumkeyring.NewConcurrentSafeKeyring(kr))
+
 	var addrList []string
 	for _, addr := range addresses {
 		addrList = append(addrList, addr.String())
@@ -100,7 +110,7 @@ func main() {
 
 	txf := client.Factory{}.
 		WithTxConfig(clientCtx.TxConfig()).
-		WithKeybase(kr).
+		WithKeybase(clientCtx.Keyring()).
 		WithChainID(string(network.ChainID())).
 		WithSignMode(signing.SignMode_SIGN_MODE_DIRECT)
 	cl := coreum.New(
@@ -111,10 +121,10 @@ func main() {
 
 	err = parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
 		batcher := coreum.NewBatcher(cl, addresses, 10)
-		application := app.New(batcher, network, transferAmount)
+		application := app.New(clientCtx, batcher, network, transferAmount)
 		ipLimiter := limiter.NewWeightedWindowLimiter(cfg.ipRateLimit.howMany, cfg.ipRateLimit.period)
 		//nolint:contextcheck
-		server := http.New(clientCtx, application, ipLimiter, log)
+		server := http.New(application, ipLimiter, log)
 
 		spawn("batcher", parallel.Fail, batcher.Run)
 		spawn("limiterCleanup", parallel.Fail, ipLimiter.Run)

@@ -9,7 +9,6 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"go.uber.org/zap"
 
-	"github.com/CoreumFoundation/coreum/v4/pkg/client"
 	"github.com/CoreumFoundation/faucet/app"
 	"github.com/CoreumFoundation/faucet/pkg/http"
 	"github.com/CoreumFoundation/faucet/pkg/limiter"
@@ -17,15 +16,13 @@ import (
 
 // HTTP type exposes app functionalities via http.
 type HTTP struct {
-	ctx    client.Context
 	app    app.App
 	server http.Server
 }
 
 // New returns an instance of the HTTP type.
-func New(ctx client.Context, app app.App, limiter limiter.PerIPLimiter, log *zap.Logger) HTTP {
+func New(app app.App, limiter limiter.PerIPLimiter, log *zap.Logger) HTTP {
 	return HTTP{
-		ctx:    ctx,
 		app:    app,
 		server: http.New(log, writeErrorMiddleware(), limiterMiddleware(limiter)),
 	}
@@ -92,7 +89,7 @@ type GenFundedResponse struct {
 }
 
 func (h HTTP) genFundedHandle(ctx http.Context) error {
-	result, err := h.app.GenMnemonicAndFund(ctx.Request().Context(), h.ctx.Codec())
+	result, err := h.app.GenMnemonicAndFund(ctx.Request().Context())
 	if err != nil {
 		return err
 	}
