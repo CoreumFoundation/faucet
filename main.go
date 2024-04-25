@@ -82,7 +82,8 @@ func main() {
 	clientCtx := client.NewContext(client.DefaultContextConfig(), config.NewModuleManager()).
 		WithChainID(string(network.ChainID())).
 		WithBroadcastMode(flags.BroadcastSync).
-		WithCodec(codec.NewProtoCodec(interfaceRegistry))
+		WithCodec(codec.NewProtoCodec(interfaceRegistry)).
+		WithAwaitTx(true)
 
 	clientCtx = addClient(cfg, log, clientCtx)
 
