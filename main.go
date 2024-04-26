@@ -11,11 +11,8 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	"github.com/cosmos/cosmos-sdk/std"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	"github.com/pkg/errors"
@@ -76,13 +73,9 @@ func main() {
 
 	network.SetSDKConfig()
 
-	interfaceRegistry := types.NewInterfaceRegistry()
-	std.RegisterInterfaces(interfaceRegistry)
-
 	clientCtx := client.NewContext(client.DefaultContextConfig(), config.NewModuleManager()).
 		WithChainID(string(network.ChainID())).
 		WithBroadcastMode(flags.BroadcastSync).
-		WithCodec(codec.NewProtoCodec(interfaceRegistry)).
 		WithAwaitTx(true)
 
 	clientCtx = addClient(cfg, log, clientCtx)

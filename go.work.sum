@@ -261,8 +261,6 @@ github.com/CloudyKit/fastprinter v0.0.0-20200109182630-33d98a066a53 h1:sR+/8Yb4s
 github.com/CloudyKit/fastprinter v0.0.0-20200109182630-33d98a066a53/go.mod h1:+3IMCy2vIlbG1XG/0ggNQv0SvxCAIpPM5b1nCz56Xno=
 github.com/CloudyKit/jet/v6 v6.2.0 h1:EpcZ6SR9n28BUGtNJSvlBqf90IpjeFr36Tizxhn/oME=
 github.com/CloudyKit/jet/v6 v6.2.0/go.mod h1:d3ypHeIRNo2+XyqnGA8s+aphtcVpjP5hPwP/Lzo7Ro4=
-github.com/CoreumFoundation/crust/build v0.0.0-20240426091524-11b0e2cab249 h1:nyGL7sh1rKwvFiHfr93m2JMYhgY0TrITaCF3Nn0kyhE=
-github.com/CoreumFoundation/crust/build v0.0.0-20240426091524-11b0e2cab249/go.mod h1:nS+zNTGtsK9ComEW/McsAK4XnPLhTsf0wIN5o1grD98=
 github.com/CosmWasm/wasmd v0.44.0 h1:2sbcoCAvfjCs1O0SWt53xULKjkV06dbSFthEViIC6Zg=
 github.com/CosmWasm/wasmd v0.44.0/go.mod h1:tDyYN050qUcdd7LOxGeo2e185sEShyO3nJGl2Cf59+k=
 github.com/CosmWasm/wasmvm v1.5.1 h1:2MHN9uFyHP6pxfvpBJ0JW6ujvAIBk9kQk283zyri0Ro=
@@ -394,8 +392,8 @@ github.com/cosmos/cosmos-db v1.0.0-rc.1 h1:SjnT8B6WKMW9WEIX32qMhnEEKcI7ZP0+G1Sa9
 github.com/cosmos/cosmos-db v1.0.0-rc.1/go.mod h1:Dnmk3flSf5lkwCqvvjNpoxjpXzhxnCAFzKHlbaForso=
 github.com/cosmos/cosmos-sdk/db v1.0.0-beta.1.0.20220726092710-f848e4300a8a h1:2humuGPw3O5riJVFq/E2FRjF57UrO97W1qJcGVmK+6k=
 github.com/cosmos/cosmos-sdk/db v1.0.0-beta.1.0.20220726092710-f848e4300a8a/go.mod h1:c8IO23vgNxueCCJlSI9awQtcxsvc+buzaeThB85qfBU=
-github.com/cosmos/ibc-go/v7 v7.3.1 h1:bil1IjnHdyWDASFYKfwdRiNtFP6WK3osW7QFEAgU4I8=
-github.com/cosmos/ibc-go/v7 v7.3.1/go.mod h1:wvx4pPBofe5ZdMNV3OFRxSI4auEP5Qfqf8JXLLNV04g=
+github.com/cosmos/ibc-go/v7 v7.4.0 h1:8FqYMptvksgMvlbN4UW9jFxTXzsPyfAzEZurujXac8M=
+github.com/cosmos/ibc-go/v7 v7.4.0/go.mod h1:L/KaEhzV5TGUCTfGysVgMBQtl5Dm7hHitfpk+GIeoAo=
 github.com/cosmos/ics23/go v0.10.0 h1:iXqLLgp2Lp+EdpIuwXTYIQU+AiHj9mOC2X9ab++bZDM=
 github.com/cosmos/ics23/go v0.10.0/go.mod h1:ZfJSmng/TBNTBkFemHHHj5YY7VAU/MBU980F4VU1NG0=
 github.com/cpuguy83/go-md2man v1.0.10 h1:BSKMNlYxDvnunlTymqtgONjNnaRV1sTpcovwwjF22jk=
