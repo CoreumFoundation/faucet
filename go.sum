@@ -618,8 +618,8 @@ github.com/ChainSafe/go-schnorrkel v1.0.0 h1:3aDA67lAykLaG1y3AOjs88dMxC88PgUuHRr
 github.com/ChainSafe/go-schnorrkel v1.0.0/go.mod h1:dpzHYVxLZcp8pjlV+O+UR8K0Hp/z7vcchBSbMBEhCw4=
 github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab h1:XPcSzlQ06tor/py1LkEM9FX70LIeDWB++vLuAO6eAYI=
 github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab/go.mod h1:VD93vCHkxYaT/RhOesXTFgd/GQDW54tr0BqGi5JU1c0=
-github.com/CoreumFoundation/coreum/v4 v4.0.0-20240426092053-26f22742269e h1:KRY2kEfwL8r9N2ApBnS7Gd9p1fr0vO4a/Prxug9i/PU=
-github.com/CoreumFoundation/coreum/v4 v4.0.0-20240426092053-26f22742269e/go.mod h1:BHBY6W8EzgGR0YpVZ+1O3uwXCWxoYQNtNsOJX7l1iY8=
+github.com/CoreumFoundation/coreum/v4 v4.0.0-20240426123753-28a0d7d58964 h1:nncDW78blAJiHTB4kFqnY1MUlWZxrYhGqj44J9UMnYQ=
+github.com/CoreumFoundation/coreum/v4 v4.0.0-20240426123753-28a0d7d58964/go.mod h1:BHBY6W8EzgGR0YpVZ+1O3uwXCWxoYQNtNsOJX7l1iY8=
 github.com/DataDog/datadog-go v3.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
 github.com/JohnCGriffin/overflow v0.0.0-20211019200055-46fa312c352c/go.mod h1:X0CRv0ky0k6m906ixxpzmDRLvX58TFUKS2eePweuyxk=
 github.com/OneOfOne/xxhash v1.2.2 h1:KMrpdQIwFcEqXDklaen+P1axHaj9BSKzvpUUfnHldSE=

@@ -9,7 +9,7 @@ replace golang.org/x/exp => golang.org/x/exp v0.0.0-20230711153332-06a737ee72cb
 
 require (
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20240321120602-0a9c50facc68
-	github.com/CoreumFoundation/crust/build v0.0.0-20240426091524-11b0e2cab249
+	github.com/CoreumFoundation/crust/build v0.0.0-20240426122050-e821744022e9
 	github.com/pkg/errors v0.9.1
 )
 
