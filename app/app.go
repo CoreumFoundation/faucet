@@ -6,23 +6,22 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 
-	"github.com/CoreumFoundation/coreum/v2/pkg/config"
+	"github.com/CoreumFoundation/coreum/v4/pkg/client"
+	"github.com/CoreumFoundation/coreum/v4/pkg/config"
 )
 
 // App implements core functionality.
 type App struct {
+	clientCtx      client.Context
 	batcher        Batcher
 	transferAmount sdk.Coin
 	network        config.NetworkConfig
 }
 
 // New returns a new instance of the App.
-func New(
-	batcher Batcher,
-	network config.NetworkConfig,
-	transferAmount sdk.Coin,
-) App {
+func New(clientCtx client.Context, batcher Batcher, network config.NetworkConfig, transferAmount sdk.Coin) App {
 	return App{
+		clientCtx:      clientCtx,
 		batcher:        batcher,
 		network:        network,
 		transferAmount: transferAmount,

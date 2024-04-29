@@ -10,12 +10,11 @@ import (
 )
 
 const (
-	repoPath         = "."
-	binaryName       = "faucet"
-	binaryPath       = "bin/" + binaryName
-	goCoverFlag      = "-cover"
-	binaryOutputFlag = "-o"
-	tagsFlag         = "-tags"
+	repoPath    = "."
+	binaryName  = "faucet"
+	binaryPath  = "bin/" + binaryName
+	goCoverFlag = "-cover"
+	tagsFlag    = "-tags"
 )
 
 // Build builds faucet in docker.
@@ -34,7 +33,8 @@ func buildFaucet(
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: targetPlatform,
 		PackagePath:    repoPath,
-		Flags:          append(extraFlags, binaryOutputFlag+"="+binOutputPath),
+		BinOutputPath:  binOutputPath,
+		Flags:          extraFlags,
 	})
 }
 

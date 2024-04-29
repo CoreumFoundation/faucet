@@ -23,9 +23,9 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/CoreumFoundation/coreum/v2/pkg/client"
-	coreumconfig "github.com/CoreumFoundation/coreum/v2/pkg/config"
-	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
+	"github.com/CoreumFoundation/coreum/v4/pkg/client"
+	coreumconfig "github.com/CoreumFoundation/coreum/v4/pkg/config"
+	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
 	"github.com/CoreumFoundation/faucet/http"
 	"github.com/CoreumFoundation/faucet/pkg/config"
 )
@@ -52,7 +52,7 @@ func init() {
 	cfg.network.SetSDKConfig()
 	cfg.clientCtx = client.NewContext(client.DefaultContextConfig(), config.NewModuleManager()).
 		WithChainID(string(cfg.network.ChainID())).
-		WithBroadcastMode(flags.BroadcastBlock)
+		WithBroadcastMode(flags.BroadcastSync)
 
 	grpcClient, err := grpc.Dial(cfg.coredAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	must.OK(err)
