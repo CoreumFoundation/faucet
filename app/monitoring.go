@@ -14,7 +14,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
-	"github.com/CoreumFoundation/coreum/v2/pkg/client"
+	"github.com/CoreumFoundation/coreum/v4/pkg/client"
 	faucethttp "github.com/CoreumFoundation/faucet/pkg/http"
 )
 

@@ -18,12 +18,15 @@ type GenMnemonicAndFundResult struct {
 
 // GenMnemonicAndFund generates a private key and funds it.
 func (a App) GenMnemonicAndFund(ctx context.Context) (GenMnemonicAndFundResult, error) {
-	kr := keyring.NewInMemory()
+	kr := keyring.NewInMemory(a.clientCtx.Codec())
 	info, mnemonic, err := kr.NewMnemonic("", keyring.English, sdk.GetConfig().GetFullBIP44Path(), "", hd.Secp256k1)
 	if err != nil {
 		return GenMnemonicAndFundResult{}, errors.Wrapf(ErrUnableToTransferToken, "err:%s", err)
 	}
-	sdkAddr := info.GetAddress()
+	sdkAddr, err := info.GetAddress()
+	if err != nil {
+		return GenMnemonicAndFundResult{}, errors.Wrapf(ErrUnableToTransferToken, "err:%s", err)
+	}
 	txHash, err := a.batcher.SendToken(ctx, sdkAddr, a.transferAmount)
 	if err != nil {
 		return GenMnemonicAndFundResult{}, errors.Wrapf(ErrUnableToTransferToken, "err:%s", err)
