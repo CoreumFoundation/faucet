@@ -2,13 +2,26 @@ module github.com/CoreumFoundation/faucet
 
 go 1.21
 
-toolchain go1.22.1
-
+// CosmosSDK replacements
 replace (
+	// cosmos keyring
+	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
+	// We need this replacement because github.com/coinbase/rosetta-sdk-go/types was part of
+	// github.com/coinbase/rosetta-sdk-go module in v0.7.9 but now it is standalone module.
+	// And this causes "ambiguous import" error. Note: it gets broken only when using go work.
+	github.com/coinbase/rosetta-sdk-go v0.7.9 => github.com/coinbase/rosetta-sdk-go v0.8.4
+	// dgrijalva/jwt-go is deprecated and doesn't receive security updates.
+	// TODO(v4): remove it: https://github.com/cosmos/cosmos-sdk/issues/13134
+	github.com/dgrijalva/jwt-go => github.com/golang-jwt/jwt/v4 v4.4.2
+	// Fix upstream GHSA-h395-qcrw-5vmq vulnerability.
+	// TODO(v4) Remove it: https://github.com/cosmos/cosmos-sdk/issues/10409
+	github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.9.0
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 	// FIXME: remove when there is a fix for https://github.com/spf13/viper/issues/1706
 	github.com/spf13/viper => github.com/spf13/viper v1.16.0
-	github.com/tendermint/tendermint => github.com/cometbft/cometbft v0.37.5
+	// https://github.com/cosmos/cosmos-sdk/issues/14949
+	// pin the version of goleveldb to v1.0.1-0.20210819022825-2ae1ddf74ef7 required by SDK v47 upgrade guide.
+	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
 	// Pin the x/exp dependency version because consmos-sdk breaking change is not compatible
 	// with cosmos-sdk v0.47.
 	// Details: https://github.com/cosmos/cosmos-sdk/issues/18415
@@ -17,7 +30,7 @@ replace (
 
 require (
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab
-	github.com/CoreumFoundation/coreum/v4 v4.0.0-20240429143357-7dea7428b1a7
+	github.com/CoreumFoundation/coreum/v4 v4.0.0-20240606115302-b9a292fabcbc
 	github.com/cosmos/cosmos-sdk v0.47.11
 	github.com/google/uuid v1.6.0
 	github.com/labstack/echo/v4 v4.10.0

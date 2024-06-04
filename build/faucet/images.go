@@ -4,10 +4,10 @@ import (
 	"context"
 	"path/filepath"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/crust/build/config"
 	"github.com/CoreumFoundation/crust/build/docker"
 	"github.com/CoreumFoundation/crust/build/tools"
+	"github.com/CoreumFoundation/crust/build/types"
 	"github.com/CoreumFoundation/faucet/build/faucet/image"
 )
 
@@ -19,7 +19,7 @@ type imageConfig struct {
 }
 
 // BuildDockerImage builds docker image of the faucet.
-func BuildDockerImage(ctx context.Context, deps build.DepsFunc) error {
+func BuildDockerImage(ctx context.Context, deps types.DepsFunc) error {
 	deps(Build)
 
 	return buildDockerImage(ctx, imageConfig{
@@ -39,7 +39,6 @@ func buildDockerImage(ctx context.Context, cfg imageConfig) error {
 	}
 
 	return docker.BuildImage(ctx, docker.BuildImageConfig{
-		RepoPath:        repoPath,
 		ContextDir:      filepath.Join("bin", ".cache", binaryName),
 		ImageName:       binaryName,
 		TargetPlatforms: cfg.TargetPlatforms,
