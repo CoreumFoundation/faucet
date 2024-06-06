@@ -30,8 +30,6 @@ replace (
 	golang.org/x/exp => golang.org/x/exp v0.0.0-20230711153332-06a737ee72cb
 )
 
-// replace github.com/CoreumFoundation/coreum/v4 => github.com/CoreumFoundation/coreum/v4 v4.0.0-20240606115302-b9a292fabcbc
-
 require (
 	github.com/CoreumFoundation/coreum/build v0.0.0-20240606115302-b9a292fabcbc
 	github.com/CoreumFoundation/crust v0.0.0-20240606115123-d2fd44727b44
