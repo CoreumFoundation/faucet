@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/CoreumFoundation/coreum-tools/pkg/build"
+	"github.com/CoreumFoundation/crust/build"
 	selfBuild "github.com/CoreumFoundation/faucet/build"
 )
 

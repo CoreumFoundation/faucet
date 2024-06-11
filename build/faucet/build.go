@@ -2,11 +2,21 @@ package faucet
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"path/filepath"
+	"runtime"
+	"time"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/build"
+	"github.com/samber/lo"
+
+	"github.com/CoreumFoundation/coreum/build/coreum"
 	"github.com/CoreumFoundation/crust/build/golang"
 	"github.com/CoreumFoundation/crust/build/tools"
+	"github.com/CoreumFoundation/crust/build/types"
+	"github.com/CoreumFoundation/crust/infra"
+	"github.com/CoreumFoundation/crust/infra/apps"
+	"github.com/CoreumFoundation/crust/pkg/znet"
 )
 
 const (
@@ -14,17 +24,16 @@ const (
 	binaryName  = "faucet"
 	binaryPath  = "bin/" + binaryName
 	goCoverFlag = "-cover"
-	tagsFlag    = "-tags"
 )
 
 // Build builds faucet in docker.
-func Build(ctx context.Context, deps build.DepsFunc) error {
+func Build(ctx context.Context, deps types.DepsFunc) error {
 	return buildFaucet(ctx, deps, tools.TargetPlatformLinuxLocalArchInDocker, []string{goCoverFlag})
 }
 
 func buildFaucet(
 	ctx context.Context,
-	deps build.DepsFunc,
+	deps types.DepsFunc,
 	targetPlatform tools.TargetPlatform,
 	extraFlags []string,
 ) error {
@@ -32,38 +41,45 @@ func buildFaucet(
 
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: targetPlatform,
-		PackagePath:    repoPath,
+		PackagePath:    "cmd",
 		BinOutputPath:  binOutputPath,
 		Flags:          extraFlags,
 	})
 }
 
 // RunIntegrationTests runs faucet integration tests.
-func RunIntegrationTests(ctx context.Context, deps build.DepsFunc) error {
-	return golang.RunTests(ctx, deps, golang.TestConfig{
+func RunIntegrationTests(ctx context.Context, deps types.DepsFunc) error {
+	deps(BuildDockerImage, coreum.BuildCoredLocally, coreum.BuildCoredDockerImage)
+
+	znetConfig := &infra.ConfigFactory{
+		EnvName:       "znet",
+		TimeoutCommit: 500 * time.Millisecond,
+		HomeDir:       filepath.Join(lo.Must(os.UserHomeDir()), ".crust", "znet"),
+		RootDir:       ".",
+		Profiles:      []string{apps.Profile1Cored, apps.ProfileFaucet},
+	}
+
+	if err := znet.Remove(ctx, znetConfig); err != nil {
+		return err
+	}
+	if err := znet.Start(ctx, znetConfig); err != nil {
+		return err
+	}
+	if err := golang.RunTests(ctx, deps, golang.TestConfig{
 		PackagePath: filepath.Join(repoPath, "integration-tests"),
 		Flags: []string{
-			tagsFlag + "=" + "integrationtests",
+			"-tags=integrationtests",
+			fmt.Sprintf("-parallel=%d", 2*runtime.NumCPU()),
+			"-timeout=1h",
 		},
-	})
-}
+	}); err != nil {
+		return err
+	}
 
-// Tidy runs `go mod tidy` for faucet repo.
-func Tidy(ctx context.Context, deps build.DepsFunc) error {
-	return golang.Tidy(ctx, repoPath, deps)
-}
-
-// Lint lints faucet repo.
-func Lint(ctx context.Context, deps build.DepsFunc) error {
-	return golang.Lint(ctx, repoPath, deps)
-}
-
-// Test run unit tests in faucet repo.
-func Test(ctx context.Context, deps build.DepsFunc) error {
-	return golang.Test(ctx, repoPath, deps)
+	return znet.Remove(ctx, znetConfig)
 }
 
 // DownloadDependencies downloads go dependencies.
-func DownloadDependencies(ctx context.Context, deps build.DepsFunc) error {
-	return golang.DownloadDependencies(ctx, repoPath, deps)
+func DownloadDependencies(ctx context.Context, deps types.DepsFunc) error {
+	return golang.DownloadDependencies(ctx, deps, repoPath)
 }
