@@ -30,7 +30,7 @@ replace (
 
 require (
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab
-	github.com/CoreumFoundation/coreum/v4 v4.0.0-20240606115302-b9a292fabcbc
+	github.com/CoreumFoundation/coreum/v4 v4.0.0-20240612092619-8d09603e839d
 	github.com/cosmos/cosmos-sdk v0.47.11
 	github.com/google/uuid v1.6.0
 	github.com/labstack/echo/v4 v4.10.0

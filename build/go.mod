@@ -31,8 +31,8 @@ replace (
 )
 
 require (
-	github.com/CoreumFoundation/coreum/build v0.0.0-20240606115302-b9a292fabcbc
-	github.com/CoreumFoundation/crust v0.0.0-20240606115123-d2fd44727b44
+	github.com/CoreumFoundation/coreum/build v0.0.0-20240612092619-8d09603e839d
+	github.com/CoreumFoundation/crust v0.0.0-20240612073237-afb494aa7ae2
 	github.com/pkg/errors v0.9.1
 )
 
