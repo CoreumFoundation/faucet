@@ -616,8 +616,8 @@ github.com/ChainSafe/go-schnorrkel v1.0.0 h1:3aDA67lAykLaG1y3AOjs88dMxC88PgUuHRr
 github.com/ChainSafe/go-schnorrkel v1.0.0/go.mod h1:dpzHYVxLZcp8pjlV+O+UR8K0Hp/z7vcchBSbMBEhCw4=
 github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab h1:XPcSzlQ06tor/py1LkEM9FX70LIeDWB++vLuAO6eAYI=
 github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab/go.mod h1:VD93vCHkxYaT/RhOesXTFgd/GQDW54tr0BqGi5JU1c0=
-github.com/CoreumFoundation/coreum/v4 v4.0.0-20240606115302-b9a292fabcbc h1:tgAEizyjZhVXLTXuHkt1oLpmMDIfuqW1tiZTnn1iZQQ=
-github.com/CoreumFoundation/coreum/v4 v4.0.0-20240606115302-b9a292fabcbc/go.mod h1:fukHWhWXVEWpDej+oOPhEuHpR3FjSWipGaan9pUZJWE=
+github.com/CoreumFoundation/coreum/v4 v4.0.0-20240612092619-8d09603e839d h1:cc7kosTIt5Lw1AjyboJEQ3gkEeUmScuC7XblT5jVBM0=
+github.com/CoreumFoundation/coreum/v4 v4.0.0-20240612092619-8d09603e839d/go.mod h1:fukHWhWXVEWpDej+oOPhEuHpR3FjSWipGaan9pUZJWE=
 github.com/DataDog/datadog-go v3.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
 github.com/JohnCGriffin/overflow v0.0.0-20211019200055-46fa312c352c/go.mod h1:X0CRv0ky0k6m906ixxpzmDRLvX58TFUKS2eePweuyxk=
 github.com/OneOfOne/xxhash v1.2.2 h1:KMrpdQIwFcEqXDklaen+P1axHaj9BSKzvpUUfnHldSE=
