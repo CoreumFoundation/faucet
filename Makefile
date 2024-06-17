@@ -32,10 +32,6 @@ release:
 release-images:
 	$(BUILDER) release/images
 
-.PHONY: dependencies
-dependencies:
-	$(BUILDER) download
-
 .PHONY: integration-tests
 integration-tests:
 	$(BUILDER) integration-tests
