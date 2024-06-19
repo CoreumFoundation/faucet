@@ -12,7 +12,6 @@ var Commands = map[string]types.Command{
 	"build/me":          {Fn: crust.BuildBuilder, Description: "Builds the builder"},
 	"build/znet":        {Fn: crust.BuildZNet, Description: "Builds znet binary"},
 	"build":             {Fn: faucet.Build, Description: "Builds faucet binary"},
-	"download":          {Fn: faucet.DownloadDependencies, Description: "Downloads go dependencies"},
 	"images":            {Fn: faucet.BuildDockerImage, Description: "Builds faucet docker image"},
 	"integration-tests": {Fn: faucet.RunIntegrationTests, Description: "Runs integration tests"},
 	"lint":              {Fn: golang.Lint, Description: "Lints code"},

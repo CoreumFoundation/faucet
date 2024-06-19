@@ -78,8 +78,3 @@ func RunIntegrationTests(ctx context.Context, deps types.DepsFunc) error {
 
 	return znet.Remove(ctx, znetConfig)
 }
-
-// DownloadDependencies downloads go dependencies.
-func DownloadDependencies(ctx context.Context, deps types.DepsFunc) error {
-	return golang.DownloadDependencies(ctx, deps, repoPath)
-}
