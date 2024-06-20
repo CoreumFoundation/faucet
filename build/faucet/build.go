@@ -48,7 +48,7 @@ func buildFaucet(
 }
 
 // RunIntegrationTests runs faucet integration tests.
-func RunIntegrationTests(ctx context.Context, deps types.DepsFunc) error {
+func RunIntegrationTests(ctx context.Context, deps types.DepsFunc) (retErr error) {
 	deps(BuildDockerImage, coreum.BuildCoredLocally, coreum.BuildCoredDockerImage)
 
 	znetConfig := &infra.ConfigFactory{
@@ -62,7 +62,11 @@ func RunIntegrationTests(ctx context.Context, deps types.DepsFunc) error {
 	if err := znet.Remove(ctx, znetConfig); err != nil {
 		return err
 	}
-	defer znet.Remove(ctx, znetConfig)
+	defer func() {
+		if err := znet.Remove(ctx, znetConfig); retErr == nil {
+			retErr = err
+		}
+	}()
 
 	if err := znet.Start(ctx, znetConfig); err != nil {
 		return err
