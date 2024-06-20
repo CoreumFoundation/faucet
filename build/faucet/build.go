@@ -62,19 +62,17 @@ func RunIntegrationTests(ctx context.Context, deps types.DepsFunc) error {
 	if err := znet.Remove(ctx, znetConfig); err != nil {
 		return err
 	}
+	defer znet.Remove(ctx, znetConfig)
+
 	if err := znet.Start(ctx, znetConfig); err != nil {
 		return err
 	}
-	if err := golang.RunTests(ctx, deps, golang.TestConfig{
+	return golang.RunTests(ctx, deps, golang.TestConfig{
 		PackagePath: filepath.Join(repoPath, "integration-tests"),
 		Flags: []string{
 			"-tags=integrationtests",
 			fmt.Sprintf("-parallel=%d", 2*runtime.NumCPU()),
 			"-timeout=1h",
 		},
-	}); err != nil {
-		return err
-	}
-
-	return znet.Remove(ctx, znetConfig)
+	})
 }
