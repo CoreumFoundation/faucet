@@ -2,7 +2,7 @@ Faucet for the Coreum blockchain
 
 ## Prerequisites
 To use `faucet` you need:
-- `go 1.19` or newer
+- `go 1.21` or newer
 - `docker`
 
 ## Executing `faucet`
@@ -14,7 +14,7 @@ To use `faucet` you need:
 Build all the required binaries by running:
 
 ```
-$ go build -o faucet
+$ make build
 ```
 
 ## Flags
