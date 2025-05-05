@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -23,6 +24,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
+	coreumapp "github.com/CoreumFoundation/coreum/v4/app"
 	"github.com/CoreumFoundation/coreum/v4/pkg/client"
 	coreumconfig "github.com/CoreumFoundation/coreum/v4/pkg/config"
 	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
@@ -147,9 +149,20 @@ func addClient(cfg cfg, log *zap.Logger, clientCtx client.Context) client.Contex
 		)
 	}
 
+	encodingConfig := coreumconfig.NewEncodingConfig(coreumapp.ModuleBasics)
+
+	pc, ok := encodingConfig.Codec.(codec.GRPCCodecProvider)
+	if !ok {
+		panic("failed to cast codec to codec.GRPCCodecProvider")
+	}
+
 	// tls grpc
 	if nodeURL.Scheme == "https" {
-		grpcClient, err := grpc.Dial(nodeURL.Host, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})))
+		grpcClient, err := grpc.Dial(
+			nodeURL.Host,
+			grpc.WithDefaultCallOptions(grpc.ForceCodec(pc.GRPCCodec())),
+			grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})),
+		)
 		if err != nil {
 			panic(err)
 		}
@@ -163,7 +176,11 @@ func addClient(cfg cfg, log *zap.Logger, clientCtx client.Context) client.Contex
 	if host == "" {
 		host = cfg.node
 	}
-	grpcClient, err := grpc.Dial(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	grpcClient, err := grpc.Dial(
+		host,
+		grpc.WithDefaultCallOptions(grpc.ForceCodec(pc.GRPCCodec())),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
 	if err != nil {
 		log.Fatal(
 			"Unable to create cosmos grpc client",

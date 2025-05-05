@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -23,6 +24,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	coreumapp "github.com/CoreumFoundation/coreum/v4/app"
 	"github.com/CoreumFoundation/coreum/v4/pkg/client"
 	coreumconfig "github.com/CoreumFoundation/coreum/v4/pkg/config"
 	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
@@ -54,7 +56,18 @@ func init() {
 		WithChainID(string(cfg.network.ChainID())).
 		WithBroadcastMode(flags.BroadcastSync)
 
-	grpcClient, err := grpc.Dial(cfg.coredAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	encodingConfig := coreumconfig.NewEncodingConfig(coreumapp.ModuleBasics)
+
+	pc, ok := encodingConfig.Codec.(codec.GRPCCodecProvider)
+	if !ok {
+		panic("failed to cast codec to codec.GRPCCodecProvider")
+	}
+
+	grpcClient, err := grpc.Dial(
+		cfg.coredAddress,
+		grpc.WithDefaultCallOptions(grpc.ForceCodec(pc.GRPCCodec())),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
 	must.OK(err)
 	cfg.clientCtx = cfg.clientCtx.WithGRPCClient(grpcClient)
 }
