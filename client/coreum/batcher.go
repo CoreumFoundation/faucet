@@ -122,7 +122,6 @@ func (b *Batcher) Run(ctx context.Context) error {
 		spawn("processBatches", parallel.Fail, func(ctx context.Context) error {
 			_ = parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
 				for _, fundingAddress := range b.fundingAddresses {
-					fundingAddress := fundingAddress
 					spawn(fundingAddress.String(), parallel.Continue, func(ctx context.Context) error {
 						b.processBatches(ctx, fundingAddress)
 						return nil

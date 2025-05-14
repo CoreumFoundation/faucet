@@ -5,6 +5,7 @@ import (
 	"sync"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
@@ -46,9 +47,9 @@ func TestBatchSend(t *testing.T) {
 	ctx := logger.WithLogger(context.Background(), zaptest.NewLogger(t))
 	ctx, cancel := context.WithCancel(ctx)
 	t.Cleanup(cancel)
-	amount := sdk.NewCoin("test-denom", sdk.NewInt(13))
+	amount := sdk.NewCoin("test-denom", sdkmath.NewInt(13))
 	fundingAddresses := []sdk.AccAddress{}
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		address, err := sdk.AccAddressFromHexUnsafe(secp256k1.GenPrivKey().PubKey().Address().String())
 		fundingAddresses = append(fundingAddresses, address)
 		requireT.NoError(err)
@@ -67,11 +68,12 @@ func TestBatchSend(t *testing.T) {
 	wg := sync.WaitGroup{}
 	requestCount := 100
 	wg.Add(requestCount)
-	for i := 0; i < requestCount; i++ {
+	for range requestCount {
 		go func() {
 			txHash, err := batcher.SendToken(ctx, nil, amount)
-			requireT.NoError(err)
-			assertT.Greater(len(txHash), 1) //nolint:testifylint // it suggests to use `NotEmpty` which is a nonsense here
+			if assert.NoError(t, err) {
+				assertT.Greater(len(txHash), 1)
+			}
 			wg.Done()
 		}()
 	}

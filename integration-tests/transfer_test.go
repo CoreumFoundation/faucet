@@ -16,6 +16,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -24,12 +25,10 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	coreumapp "github.com/CoreumFoundation/coreum/v4/app"
-	"github.com/CoreumFoundation/coreum/v4/pkg/client"
-	coreumconfig "github.com/CoreumFoundation/coreum/v4/pkg/config"
-	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
+	"github.com/CoreumFoundation/coreum/v5/pkg/client"
+	coreumconfig "github.com/CoreumFoundation/coreum/v5/pkg/config"
+	"github.com/CoreumFoundation/coreum/v5/pkg/config/constant"
 	"github.com/CoreumFoundation/faucet/http"
-	"github.com/CoreumFoundation/faucet/pkg/config"
 )
 
 type testConfig struct {
@@ -52,18 +51,18 @@ func init() {
 	flag.Parse()
 	cfg.network, _ = coreumconfig.NetworkConfigByChainID(constant.ChainIDDev)
 	cfg.network.SetSDKConfig()
-	cfg.clientCtx = client.NewContext(client.DefaultContextConfig(), config.NewModuleManager()).
+	cfg.clientCtx = client.NewContext(client.DefaultContextConfig(), auth.AppModuleBasic{}).
 		WithChainID(string(cfg.network.ChainID())).
 		WithBroadcastMode(flags.BroadcastSync)
 
-	encodingConfig := coreumconfig.NewEncodingConfig(coreumapp.ModuleBasics)
+	encodingConfig := coreumconfig.NewEncodingConfig(auth.AppModuleBasic{})
 
 	pc, ok := encodingConfig.Codec.(codec.GRPCCodecProvider)
 	if !ok {
 		panic("failed to cast codec to codec.GRPCCodecProvider")
 	}
 
-	grpcClient, err := grpc.Dial(
+	grpcClient, err := grpc.NewClient(
 		cfg.coredAddress,
 		grpc.WithDefaultCallOptions(grpc.ForceCodec(pc.GRPCCodec())),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
