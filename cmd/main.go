@@ -10,11 +10,14 @@ import (
 	"strings"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
+	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"go.uber.org/zap"
@@ -23,10 +26,10 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
-	"github.com/CoreumFoundation/coreum/v4/pkg/client"
-	coreumconfig "github.com/CoreumFoundation/coreum/v4/pkg/config"
-	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
-	coreumkeyring "github.com/CoreumFoundation/coreum/v4/pkg/keyring"
+	"github.com/CoreumFoundation/coreum/v5/pkg/client"
+	coreumconfig "github.com/CoreumFoundation/coreum/v5/pkg/config"
+	"github.com/CoreumFoundation/coreum/v5/pkg/config/constant"
+	coreumkeyring "github.com/CoreumFoundation/coreum/v5/pkg/keyring"
 	"github.com/CoreumFoundation/faucet/app"
 	"github.com/CoreumFoundation/faucet/client/coreum"
 	"github.com/CoreumFoundation/faucet/http"
@@ -73,7 +76,7 @@ func main() {
 
 	network.SetSDKConfig()
 
-	clientCtx := client.NewContext(client.DefaultContextConfig(), config.NewModuleManager()).
+	clientCtx := client.NewContext(client.DefaultContextConfig(), auth.AppModuleBasic{}).
 		WithChainID(string(network.ChainID())).
 		WithBroadcastMode(flags.BroadcastSync).
 		WithAwaitTx(true)
@@ -81,7 +84,7 @@ func main() {
 	clientCtx = addClient(cfg, log, clientCtx)
 
 	transferAmount := sdk.Coin{
-		Amount: sdk.NewInt(cfg.transferAmount),
+		Amount: sdkmath.NewInt(cfg.transferAmount),
 		Denom:  network.Denom(),
 	}
 
@@ -147,9 +150,20 @@ func addClient(cfg cfg, log *zap.Logger, clientCtx client.Context) client.Contex
 		)
 	}
 
+	encodingConfig := coreumconfig.NewEncodingConfig(auth.AppModuleBasic{})
+
+	pc, ok := encodingConfig.Codec.(codec.GRPCCodecProvider)
+	if !ok {
+		panic("failed to cast codec to codec.GRPCCodecProvider")
+	}
+
 	// tls grpc
 	if nodeURL.Scheme == "https" {
-		grpcClient, err := grpc.Dial(nodeURL.Host, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})))
+		grpcClient, err := grpc.NewClient(
+			nodeURL.Host,
+			grpc.WithDefaultCallOptions(grpc.ForceCodec(pc.GRPCCodec())),
+			grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})),
+		)
 		if err != nil {
 			panic(err)
 		}
@@ -163,7 +177,11 @@ func addClient(cfg cfg, log *zap.Logger, clientCtx client.Context) client.Contex
 	if host == "" {
 		host = cfg.node
 	}
-	grpcClient, err := grpc.Dial(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	grpcClient, err := grpc.NewClient(
+		host,
+		grpc.WithDefaultCallOptions(grpc.ForceCodec(pc.GRPCCodec())),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
 	if err != nil {
 		log.Fatal(
 			"Unable to create cosmos grpc client",

@@ -40,7 +40,6 @@ func TestParseAddress(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			requireT := require.New(t)
 			prefix, addr, err := parseAddress(tc.address)
