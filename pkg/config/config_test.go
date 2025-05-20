@@ -20,7 +20,7 @@ func TestWithEnv_WithPrefix(t *testing.T) {
 	err := WithEnv(flagSet, "pfx")
 	require.NoError(t, err)
 
-	assert.EqualValues(t, 12, port)
+	assert.Equal(t, 12, port)
 }
 
 func TestWithEnv_WithoutPrefix(t *testing.T) {
@@ -32,7 +32,7 @@ func TestWithEnv_WithoutPrefix(t *testing.T) {
 	err := WithEnv(flagSet, "some_prefix")
 	require.NoError(t, err)
 
-	assert.EqualValues(t, 1, port)
+	assert.Equal(t, 1, port)
 }
 
 func TestWithEnv_OnlySetEnv(t *testing.T) {
@@ -44,7 +44,7 @@ func TestWithEnv_OnlySetEnv(t *testing.T) {
 	err := WithEnv(flagSet, "")
 	require.NoError(t, err)
 
-	assert.EqualValues(t, 12, port)
+	assert.Equal(t, 12, port)
 }
 
 func TestWithEnv_OnlySetFlag(t *testing.T) {
@@ -57,7 +57,7 @@ func TestWithEnv_OnlySetFlag(t *testing.T) {
 	err := WithEnv(flagSet, "")
 	require.NoError(t, err)
 
-	assert.EqualValues(t, 20, port)
+	assert.Equal(t, 20, port)
 }
 
 func TestWithEnv_FlagPrecedesEnv_SenEnvBeforeParse(t *testing.T) {
@@ -72,7 +72,7 @@ func TestWithEnv_FlagPrecedesEnv_SenEnvBeforeParse(t *testing.T) {
 	err := WithEnv(flagSet, "")
 	require.NoError(t, err)
 
-	assert.EqualValues(t, 183, port)
+	assert.Equal(t, 183, port)
 }
 
 func TestWithEnv_FlagPrecedesEnv_SenEnvAfterParse(t *testing.T) {
@@ -86,7 +86,7 @@ func TestWithEnv_FlagPrecedesEnv_SenEnvAfterParse(t *testing.T) {
 	err := WithEnv(flagSet, "")
 	require.NoError(t, err)
 
-	assert.EqualValues(t, 183, port)
+	assert.Equal(t, 183, port)
 }
 
 func setArgAndRevert(args []string) func() {

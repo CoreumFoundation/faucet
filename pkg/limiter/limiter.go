@@ -42,15 +42,6 @@ func (p period) Increment(ip net.IP) {
 	p.counters[string(ip)]++
 }
 
-// NewWeightedWindowLimiter returns new limiter implementing weighted window algorithm.
-func NewWeightedWindowLimiter(limit uint64, duration time.Duration) *WeightedWindowLimiter {
-	return &WeightedWindowLimiter{
-		limit:    limit,
-		duration: duration,
-		current:  newPeriod(duration),
-	}
-}
-
 // WeightedWindowLimiter imlements rate limiting using weighted window algorithm.
 type WeightedWindowLimiter struct {
 	limit    uint64
@@ -59,6 +50,15 @@ type WeightedWindowLimiter struct {
 	mu       sync.Mutex
 	previous period
 	current  period
+}
+
+// NewWeightedWindowLimiter returns new limiter implementing weighted window algorithm.
+func NewWeightedWindowLimiter(limit uint64, duration time.Duration) *WeightedWindowLimiter {
+	return &WeightedWindowLimiter{
+		limit:    limit,
+		duration: duration,
+		current:  newPeriod(duration),
+	}
 }
 
 // IsRequestAllowed tells if request should be handled or rejected due to exhausted rate limit.

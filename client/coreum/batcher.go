@@ -12,6 +12,18 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
 )
 
+// Batcher exposes functionality to batch many transfer requests.
+type Batcher struct {
+	requestBuffer    chan request
+	client           coreumClient
+	fundingAddresses []sdk.AccAddress
+	batchSize        int
+	batchChan        chan batch
+
+	mu      sync.RWMutex
+	stopped bool
+}
+
 // NewBatcher returns new instance of Batcher type.
 func NewBatcher(
 	client coreumClient,
@@ -40,18 +52,6 @@ type coreumClient interface {
 	) (string, error)
 }
 
-// Batcher exposes functionality to batch many transfer requests.
-type Batcher struct {
-	requestBuffer    chan request
-	client           coreumClient
-	fundingAddresses []sdk.AccAddress
-	batchSize        int
-	batchChan        chan batch
-
-	mu      sync.RWMutex
-	stopped bool
-}
-
 type result struct {
 	txHash string
 	err    error
@@ -74,6 +74,34 @@ func (b *Batcher) SendToken(ctx context.Context, destAddress sdk.AccAddress, amo
 	case d := <-ctx.Done():
 		return "", errors.Errorf("request aborted, %v", d)
 	}
+}
+
+// Run starts goroutines for batch processing requests.
+func (b *Batcher) Run(ctx context.Context) error {
+	return parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
+		spawn("closer", parallel.Fail, func(ctx context.Context) error {
+			<-ctx.Done()
+			b.close()
+			return errors.WithStack(ctx.Err())
+		})
+		spawn("createBatches", parallel.Fail, func(ctx context.Context) error {
+			b.createBatches()
+			return errors.WithStack(ctx.Err())
+		})
+		spawn("processBatches", parallel.Fail, func(ctx context.Context) error {
+			_ = parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
+				for _, fundingAddress := range b.fundingAddresses {
+					spawn(fundingAddress.String(), parallel.Continue, func(ctx context.Context) error {
+						b.processBatches(ctx, fundingAddress)
+						return nil
+					})
+				}
+				return nil
+			})
+			return errors.WithStack(ctx.Err())
+		})
+		return nil
+	})
 }
 
 func (b *Batcher) close() {
@@ -105,34 +133,6 @@ func (b *Batcher) requestFund(address sdk.AccAddress, amount sdk.Coin) (<-chan r
 	}
 	b.requestBuffer <- req
 	return req.responseChan, nil
-}
-
-// Run starts goroutines for batch processing requests.
-func (b *Batcher) Run(ctx context.Context) error {
-	return parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
-		spawn("closer", parallel.Fail, func(ctx context.Context) error {
-			<-ctx.Done()
-			b.close()
-			return errors.WithStack(ctx.Err())
-		})
-		spawn("createBatches", parallel.Fail, func(ctx context.Context) error {
-			b.createBatches()
-			return errors.WithStack(ctx.Err())
-		})
-		spawn("processBatches", parallel.Fail, func(ctx context.Context) error {
-			_ = parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
-				for _, fundingAddress := range b.fundingAddresses {
-					spawn(fundingAddress.String(), parallel.Continue, func(ctx context.Context) error {
-						b.processBatches(ctx, fundingAddress)
-						return nil
-					})
-				}
-				return nil
-			})
-			return errors.WithStack(ctx.Err())
-		})
-		return nil
-	})
 }
 
 type batch []request
