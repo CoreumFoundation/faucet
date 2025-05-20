@@ -43,7 +43,7 @@ func TestParseAddress(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			requireT := require.New(t)
 			prefix, addr, err := parseAddress(tc.address)
-			requireT.EqualValues(tc.expectedPrefix, prefix)
+			requireT.Equal(tc.expectedPrefix, prefix)
 			if !tc.verifyError {
 				requireT.NoError(err)
 				requireT.NotNil(addr)

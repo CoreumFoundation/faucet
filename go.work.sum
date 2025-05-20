@@ -226,7 +226,6 @@ cloud.google.com/go/compute v1.19.0/go.mod h1:rikpw2y+UMidAe9tISo04EHNOIf42RLYF/
 cloud.google.com/go/compute v1.20.1/go.mod h1:4tCnrn48xsqlwSAiLf1HXMQk8CONslYbdiEZc9FEIbM=
 cloud.google.com/go/compute v1.23.1/go.mod h1:CqB3xpmPKKt3OJpW2ndFIXnA9A4xAy/F3Xp1ixncW78=
 cloud.google.com/go/compute v1.23.3/go.mod h1:VCgBUoMnIVIR0CscqQiPJLAG25E3ZRZMzcFZeQ+h8CI=
-cloud.google.com/go/compute v1.29.0 h1:Lph6d8oPi38NHkOr6S55Nus/Pbbcp37m/J0ohgKAefs=
 cloud.google.com/go/compute v1.29.0/go.mod h1:HFlsDurE5DpQZClAGf/cYh+gxssMhBxBovZDYkEn/Og=
 cloud.google.com/go/compute/metadata v0.1.0/go.mod h1:Z1VN+bulIf6bt4P/C37K4DyZYZEXYonfTBHHFPO/4UU=
 cloud.google.com/go/compute/metadata v0.2.0/go.mod h1:zFmK7XCadkQkj6TtorcaGlCW1hT1fIilQDwofLpJ20k=
@@ -990,8 +989,6 @@ github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab/go
 github.com/CoreumFoundation/coreum-tools v0.4.1-0.20240321120602-0a9c50facc68/go.mod h1:VD93vCHkxYaT/RhOesXTFgd/GQDW54tr0BqGi5JU1c0=
 github.com/CoreumFoundation/coreum/build v0.0.0-20240612092619-8d09603e839d h1:/n0Mw0BjsipOn8dkMJsx4YurrPmFLp8vZzWhugUWL2c=
 github.com/CoreumFoundation/coreum/build v0.0.0-20240612092619-8d09603e839d/go.mod h1:OTX5LdcocDzWHklOuMJKGn9xNkPn0WB9UPXIBVyOIJo=
-github.com/CoreumFoundation/coreum/build v0.0.0-20250417103402-9a7f9035f445 h1:bK3mk6AfdpLeTg1ECdeMoOaKn+4JSphRVre3lVQ7qMQ=
-github.com/CoreumFoundation/coreum/build v0.0.0-20250417103402-9a7f9035f445/go.mod h1:9LO1Sy+zjLtcPw6p0p12/ExWpUeZs8oa/v9rGst+NVI=
 github.com/CoreumFoundation/coreum/v4 v4.0.0-20240213123712-d7d6a45ddb8f h1:a+lBcN3rWvoa/5mvdOQMaUU604/J3h/0rumGnISRglo=
 github.com/CoreumFoundation/coreum/v4 v4.0.0-20240213123712-d7d6a45ddb8f/go.mod h1:m17GEOObKO0uMNRSeitPFjjne55MSbzFeTlAONaMGkI=
 github.com/CoreumFoundation/coreum/v5 v5.0.0 h1:pW+3ydeSlpBfvKCmoJ1/I9At0u/ZDsQl3DebkicQI3c=
@@ -1003,6 +1000,8 @@ github.com/CoreumFoundation/crust v0.0.0-20240612073237-afb494aa7ae2 h1:LyJ72/OL
 github.com/CoreumFoundation/crust v0.0.0-20240612073237-afb494aa7ae2/go.mod h1:+tc+D5f9K7oNNtv8UazzNy8LheAhBG7UDc25JwY803Y=
 github.com/CoreumFoundation/crust v0.0.0-20250325111106-1ceef3a161fe h1:X4l6o15vSyKwcof6Juqa1Sjyi95+79Os6oJABx3W4C0=
 github.com/CoreumFoundation/crust v0.0.0-20250325111106-1ceef3a161fe/go.mod h1:6upahk1765UAryMA55OskmSDVoP98MMEAF4A+TFDyJI=
+github.com/CoreumFoundation/crust v0.0.0-20250422105139-051d68f6bb18 h1:Dakkd1sHgL4RB+hcXJC815EyCfH45McG19zKVTPI5YY=
+github.com/CoreumFoundation/crust v0.0.0-20250422105139-051d68f6bb18/go.mod h1:6upahk1765UAryMA55OskmSDVoP98MMEAF4A+TFDyJI=
 github.com/CoreumFoundation/crust v0.0.0-20250428150205-f8b385a8d919 h1:FBknw0Rx4zgX8r01B0oFyuVAe6WBpQ6T4/3QlXkGzec=
 github.com/CoreumFoundation/crust v0.0.0-20250428150205-f8b385a8d919/go.mod h1:6upahk1765UAryMA55OskmSDVoP98MMEAF4A+TFDyJI=
 github.com/CoreumFoundation/crust/znet v0.0.0-20250325111106-1ceef3a161fe h1:otll6VYj1juN6W0x7/iJFc8h16QwXMobCZgpuvljW6o=

@@ -44,7 +44,7 @@ func TestBatchSend(t *testing.T) {
 	assertT := assert.New(t)
 	requireT := require.New(t)
 
-	ctx := logger.WithLogger(context.Background(), zaptest.NewLogger(t))
+	ctx := logger.WithLogger(t.Context(), zaptest.NewLogger(t))
 	ctx, cancel := context.WithCancel(ctx)
 	t.Cleanup(cancel)
 	amount := sdk.NewCoin("test-denom", sdkmath.NewInt(13))
@@ -88,5 +88,5 @@ func TestBatchSend(t *testing.T) {
 		totalAddressesCount += len(call.requests)
 	}
 
-	assertT.EqualValues(requestCount, totalAddressesCount)
+	assertT.Equal(requestCount, totalAddressesCount)
 }

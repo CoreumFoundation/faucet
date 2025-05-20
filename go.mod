@@ -1,6 +1,8 @@
 module github.com/CoreumFoundation/faucet
 
-go 1.23.3
+go 1.24
+
+toolchain go1.24.3
 
 // CosmosSDK replacements
 replace (
@@ -28,7 +30,7 @@ require (
 	github.com/samber/lo v1.49.1
 	github.com/spf13/pflag v1.0.6
 	github.com/stretchr/testify v1.10.0
-	go.uber.org/zap v1.23.0
+	go.uber.org/zap v1.27.0
 	google.golang.org/grpc v1.70.0
 )
 
@@ -45,6 +47,8 @@ require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
 	github.com/99designs/keyring v1.2.2 // indirect
+	github.com/CoreumFoundation/crust v0.0.0-20250517130213-2f1a1d58aebc // indirect
+	github.com/CoreumFoundation/crust/znet v0.0.0-20250517130213-2f1a1d58aebc // indirect
 	github.com/CosmWasm/wasmd v0.54.0 // indirect
 	github.com/CosmWasm/wasmvm/v2 v2.2.2 // indirect
 	github.com/DataDog/datadog-go v4.8.3+incompatible // indirect
